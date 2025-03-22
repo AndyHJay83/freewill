@@ -702,8 +702,8 @@
                 lastTapTime = currentTime;
             });
 
-            // Return functions needed for external use
-            return {
+            // Initialize drawing controls object
+            drawingControls = {
                 clearCanvas: () => ctx.clearRect(0, 0, canvas.width, canvas.height),
                 saveDrawingState: () => canvas.toDataURL(),
                 loadDrawingState: (dataUrl) => {
@@ -912,7 +912,6 @@
         // Start Mic Button Functionality
         startMicButton.addEventListener('click', () => {
             if (currentEffect === 'pen') {
-                currentDrawingData = drawingControls.saveDrawingState();
                 showDrawingPopup();
             } else if (currentEffect === 'new') {
                 // Reset the Free Will effect
