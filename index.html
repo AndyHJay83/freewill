@@ -250,6 +250,83 @@
         #order-settings {
             display: block;
         }
+
+        .drawing-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1C1C1E;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 350px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .drawing-popup.active {
+            display: block;
+        }
+
+        .drawing-popup input {
+            width: 100%;
+            background: #2C2C2E;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 17px;
+            margin-bottom: 15px;
+        }
+
+        .drawing-popup button {
+            width: 100%;
+            background: #007AFF;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 17px;
+            margin-top: 10px;
+        }
+
+        .drawing-list {
+            margin-top: 20px;
+        }
+
+        .drawing-item {
+            background: #1C1C1E;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .drawing-item-title {
+            font-size: 17px;
+            margin-bottom: 5px;
+        }
+
+        .drawing-item-keyword {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .countdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            color: #FFB800;
+            z-index: 2000;
+            display: none;
+        }
+
+        .countdown.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -312,6 +389,16 @@
         <div class="home-indicator"></div>
     </div>
 
+    <!-- Drawing Save Popup -->
+    <div class="drawing-popup" id="drawing-popup">
+        <input type="text" id="drawing-title" placeholder="Drawing Title">
+        <input type="text" id="drawing-keyword" placeholder="Keyword">
+        <button id="save-drawing">Save Drawing</button>
+    </div>
+
+    <!-- Countdown Display -->
+    <div class="countdown" id="countdown"></div>
+
     <!-- Settings Panel -->
     <div class="settings-panel" id="settings-panel">
         <div class="settings-header">
@@ -359,9 +446,18 @@
                 <p style="color: #666; margin-top: 10px;">New features and settings will be available in a future update.</p>
             </div>
         </div>
+
+        <!-- Drawing Effect Settings -->
+        <div class="effect-settings" id="drawing-settings">
+            <div class="settings-group">
+                <div class="settings-label">Saved Drawings</div>
+                <div class="drawing-list" id="drawing-list">
+                    <!-- Drawings will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="config.js"></script>
     <script>
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
@@ -376,12 +472,24 @@
 
         let currentEffect = 'order';
 
+        // Add these at the top with other variables
+        let currentDrawingData = null;
+        let drawings = JSON.parse(localStorage.getItem('drawings') || '[]');
+        let isEditingDrawing = false;
+        let editingDrawingId = null;
+        const drawingPopup = document.getElementById('drawing-popup');
+        const drawingTitle = document.getElementById('drawing-title');
+        const drawingKeyword = document.getElementById('drawing-keyword');
+        const saveDrawingBtn = document.getElementById('save-drawing');
+        const countdownDisplay = document.getElementById('countdown');
+
         // Effect switching functions
         function switchToEffect(effect) {
             currentEffect = effect;
             const orderSettings = document.getElementById('order-settings');
             const otherSettings = document.getElementById('other-settings');
             const freewillSettings = document.getElementById('freewill-settings');
+            const drawingSettings = document.getElementById('drawing-settings');
             const undoButton = document.querySelector('.circle-button:first-child');
             const redoButton = document.querySelector('.circle-button:last-child');
             const creationTime = document.querySelector('.creation-time');
@@ -399,24 +507,29 @@
                 orderSettings.style.display = 'block';
                 otherSettings.style.display = 'none';
                 freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'none';
                 undoButton.classList.add('disabled');
                 redoButton.classList.add('disabled');
             } else if (effect === 'pen') {
                 orderSettings.style.display = 'none';
-                otherSettings.style.display = 'block';
+                otherSettings.style.display = 'none';
                 freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'block';
                 undoButton.classList.remove('disabled');
                 redoButton.classList.add('disabled');
+                updateDrawingsList();
             } else if (effect === 'new') {
                 orderSettings.style.display = 'none';
                 otherSettings.style.display = 'none';
                 freewillSettings.style.display = 'block';
+                drawingSettings.style.display = 'none';
                 undoButton.classList.add('disabled');
                 redoButton.classList.add('disabled');
             } else {
                 orderSettings.style.display = 'none';
                 otherSettings.style.display = 'block';
                 freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'none';
                 undoButton.classList.add('disabled');
                 redoButton.classList.add('disabled');
             }
@@ -513,6 +626,21 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
 
+            // Save canvas state
+            function saveDrawingState() {
+                return canvas.toDataURL();
+            }
+
+            // Load canvas state
+            function loadDrawingState(dataUrl) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = dataUrl;
+            }
+
             // Double tap detection for undo button
             undoButton.addEventListener('click', () => {
                 const currentTime = new Date().getTime();
@@ -560,7 +688,286 @@
             canvas.addEventListener('touchstart', startDrawing);
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', () => isDrawing = false);
+
+            // Return functions needed for external use
+            return {
+                clearCanvas,
+                saveDrawingState,
+                loadDrawingState
+            };
         }
+
+        // Initialize drawing controls
+        const drawingControls = initializeDrawing();
+
+        // Save drawing functionality
+        function showDrawingPopup(isEditing = false, drawingId = null) {
+            isEditingDrawing = isEditing;
+            editingDrawingId = drawingId;
+            
+            if (isEditing) {
+                const drawing = drawings.find(d => d.id === drawingId);
+                drawingTitle.value = drawing.title;
+                drawingKeyword.value = drawing.keyword;
+            } else {
+                drawingTitle.value = '';
+                drawingKeyword.value = '';
+            }
+            
+            drawingPopup.classList.add('active');
+            drawingTitle.focus();
+        }
+
+        function hideDrawingPopup() {
+            drawingPopup.classList.remove('active');
+            isEditingDrawing = false;
+            editingDrawingId = null;
+        }
+
+        function saveDrawing() {
+            const title = drawingTitle.value.trim();
+            const keyword = drawingKeyword.value.trim().toLowerCase();
+            
+            if (!title || !keyword) {
+                alert('Please enter both title and keyword');
+                return;
+            }
+
+            const drawingData = drawingControls.saveDrawingState();
+            
+            if (isEditingDrawing) {
+                const index = drawings.findIndex(d => d.id === editingDrawingId);
+                drawings[index] = {
+                    ...drawings[index],
+                    title,
+                    keyword,
+                    data: drawingData,
+                    lastModified: new Date().toISOString()
+                };
+            } else {
+                drawings.push({
+                    id: Date.now().toString(),
+                    title,
+                    keyword,
+                    data: drawingData,
+                    created: new Date().toISOString(),
+                    lastModified: new Date().toISOString()
+                });
+            }
+
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            updateDrawingsList();
+            hideDrawingPopup();
+        }
+
+        function updateDrawingsList() {
+            const drawingList = document.getElementById('drawing-list');
+            drawingList.innerHTML = drawings
+                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+                .map(drawing => `
+                    <div class="drawing-item" data-id="${drawing.id}">
+                        <div class="drawing-item-title">${drawing.title}</div>
+                        <div class="drawing-item-keyword">${drawing.keyword}</div>
+                    </div>
+                `).join('');
+
+            // Add click listeners to drawing items
+            document.querySelectorAll('.drawing-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const drawingId = item.dataset.id;
+                    const drawing = drawings.find(d => d.id === drawingId);
+                    drawingControls.loadDrawingState(drawing.data);
+                    switchToEffect('pen');
+                    settingsPanel.classList.remove('active');
+                });
+            });
+        }
+
+        // Voice activation functionality
+        let countdownTimer;
+        
+        function startCountdown() {
+            let count = 10;
+            countdownDisplay.textContent = count;
+            countdownDisplay.classList.add('active');
+            
+            countdownTimer = setInterval(() => {
+                count--;
+                countdownDisplay.textContent = count;
+                
+                if (count === 0) {
+                    clearInterval(countdownTimer);
+                    countdownDisplay.classList.remove('active');
+                    startVoiceRecognition();
+                }
+            }, 1000);
+        }
+
+        function startVoiceRecognition() {
+            recognition.continuous = true;
+            recognition.start();
+        }
+
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let micStartTimeout;
+        let microphoneActive = false;
+        const startMicButton = document.getElementById('start-mic');
+        const micToggle = document.getElementById('mic-toggle');
+
+        // Initialize Speech Recognition if available
+        try {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            // Speech recognition event handling
+            recognition.onresult = (event) => {
+                const current = event.resultIndex;
+                const transcript = event.results[current][0].transcript.toLowerCase();
+                
+                if (currentEffect === 'pen') {
+                    const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
+                    if (matchingDrawing) {
+                        drawingControls.loadDrawingState(matchingDrawing.data);
+                        recognition.stop();
+                    }
+                } else if (transcript.includes(triggerWord.value.toLowerCase())) {
+                    const itemOrder = extractItemOrder(transcript);
+                    if (itemOrder.length === 4) {
+                        updateResponseText(itemOrder);
+                        microphoneActive = false;
+                        recognition.stop();
+                    }
+                }
+            };
+
+            recognition.onend = () => {
+                // Only restart if still active and in the correct mode
+                if (microphoneActive) {
+                    try {
+                        recognition.start();
+                    } catch (err) {
+                        // Silently handle any errors when restarting recognition
+                    }
+                }
+            };
+        } catch (err) {
+            console.log('Speech Recognition not available');
+        }
+
+        // Store the original items
+        const items = {
+            'phone': 'a phone',
+            'watch': 'a watch',
+            'airpods': 'Airpods',
+            'wallet': 'a wallet'
+        };
+
+        // Settings Panel Functionality
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.classList.add('active');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsPanel.classList.remove('active');
+        });
+
+        // Mic Toggle Functionality
+        micToggle.addEventListener('click', () => {
+            if (currentEffect === 'pen') {
+                startCountdown();
+            } else {
+                microphoneActive = false;
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {
+                    // Silently handle any errors when stopping recognition
+                }
+                startMicButton.style.color = '#FFB800';
+                startMicButton.style.borderColor = '#FFB800';
+                startMicButton.disabled = false;
+            }
+        });
+
+        // Start Mic Button Functionality
+        startMicButton.addEventListener('click', () => {
+            if (currentEffect === 'pen') {
+                currentDrawingData = drawingControls.saveDrawingState();
+                showDrawingPopup();
+            } else if (currentEffect === 'new') {
+                // Reset the Free Will effect
+                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                    <br><br>
+                    Infront of you, you should have 3 items:
+                    <br><br>
+                    A pen<br>
+                    A wallet<br>
+                    A watch
+                    <br><br>
+                    Pick up one and give it to me.`;
+                initializeFreeWill();
+            } else {
+                // Original microphone functionality
+                microphoneActive = true;
+                startMicrophoneAfterDelay();
+                startMicButton.style.color = '#666';
+                startMicButton.style.borderColor = '#666';
+                startMicButton.disabled = true;
+            }
+        });
+
+        // Effect Button Listeners
+        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
+        document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
+        document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
+        document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
+        document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
+
+        // Settings Input Listeners
+        micDelay.addEventListener('change', () => {
+            if (microphoneActive) {
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {}
+                startMicrophoneAfterDelay();
+            }
+        });
+
+        triggerWord.addEventListener('change', () => {
+            if (microphoneActive) {
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {}
+                startMicrophoneAfterDelay();
+            }
+        });
+
+        function startMicrophoneAfterDelay() {
+            if (!microphoneActive) return;
+            
+            const delay = parseInt(micDelay.value) * 1000;
+            micStartTimeout = setTimeout(() => {
+                if (!microphoneActive) {
+                    startMicButton.style.color = '#FFB800';
+                    startMicButton.style.borderColor = '#FFB800';
+                    startMicButton.disabled = false;
+                    return;
+                }
+                try {
+                    recognition.start();
+                } catch (err) {
+                    // Silently handle any errors when starting recognition
+                }
+            }, delay);
+        }
+
+        // Initialize with Order effect
+        switchToEffect('order');
 
         // Free Will functionality
         function initializeFreeWill() {
@@ -582,63 +989,8 @@
                 return Math.floor(x / columnWidth);
             }
 
-            async function generateAIMessage(myItem, pocketItem, handItem) {
-                try {
-                    console.log('Starting AI message generation...');
-                    console.log('Items:', { myItem, pocketItem, handItem });
-                    
-                    // Add loading message
-                    textOverlay.innerHTML += '<br>'.repeat(50) + 'Generating prediction...';
-                    
-                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${config.OPENAI_API_KEY}`
-                        },
-                        body: JSON.stringify({
-                            model: "gpt-3.5-turbo",
-                            messages: [{
-                                role: "user",
-                                content: `I am doing a magic trick where a spectator gets to freely pick one of three items to give to me, then one of the remaining items to put in their pocket, and then holds on to the last item. I have then predicted that outcome, knowing what they will do ahead of time.
-
-                                The items were: ${myItem.toLowerCase()}, ${pocketItem.toLowerCase()}, and ${handItem.toLowerCase()}.
-
-                                I ended up with ${myItem.toLowerCase()}, they put ${pocketItem.toLowerCase()} in their pocket, and they're holding ${handItem.toLowerCase()}.
-
-                                Could you write me a very simple 2-3 sentence paragraph with some fun or personalised message about the items and where they've ended up. For example, if they leave me with the wallet, it could mention something about giving me the money! Or if they put the pen in their pocket, it could mention something about it being where it belongs. These types of things.
-
-                                The tone should be professional and not too cheesy, but still fun.`
-                            }],
-                            temperature: 0.7,
-                            max_tokens: 150
-                        })
-                    });
-
-                    console.log('API Response status:', response.status);
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('API Error:', errorText);
-                        throw new Error(`AI API request failed: ${response.status} ${errorText}`);
-                    }
-
-                    const data = await response.json();
-                    console.log('API Response data:', data);
-                    
-                    const message = data.choices[0].message.content.trim();
-                    console.log('Generated message:', message);
-                    
-                    return message;
-                } catch (error) {
-                    console.error('Error generating AI message:', error);
-                    // Fallback message if AI fails
-                    return `If I have influenced you correctly, I should be holding the ${myItem.replace('A ', '')}, you should be holding the ${handItem.replace('A ', '')}, and the ${pocketItem.replace('A ', '')} should be in your pocket!`;
-                }
-            }
-
             function handleSwipe(e) {
-                if (scrollCount >= 2) return;
+                if (scrollCount >= 2) return; // Stop after two swipes
 
                 const touch = e.touches[0];
                 const column = getColumnFromX(touch.clientX);
@@ -647,21 +999,23 @@
                 if (!selectedItems.includes(item)) {
                     selectedItems.push(item);
                     scrollCount++;
+
+                    // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
                         newText = '<br>'.repeat(50) + firstMessage;
-                        textOverlay.innerHTML += newText;
                     } else if (scrollCount === 2) {
-                        newText = '<br>'.repeat(50) + secondMessage;
-                        textOverlay.innerHTML += newText;
+                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
+                        const finalMessage = finalTemplate
+                            .replace('[FIRST]', selectedItems[0].replace('A ', ''))
+                            .replace('[SECOND]', selectedItems[1].replace('A ', ''))
+                            .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        // Generate AI message after second swipe
-                        generateAIMessage(selectedItems[0], selectedItems[1], selectedItems[2])
-                            .then(aiMessage => {
-                                // Replace loading message with AI response
-                                textOverlay.innerHTML = textOverlay.innerHTML.replace('Generating prediction...', aiMessage);
-                            });
+                        newText = '<br>'.repeat(50) + secondMessage +
+                                '<br>'.repeat(50) + finalMessage;
                     }
+
+                    textOverlay.innerHTML += newText;
                 }
             }
 
@@ -698,122 +1052,6 @@
             setTimeout(() => {
                 saveButton.textContent = 'Save Changes';
             }, 2000);
-        });
-
-        // Reset functionality for 3-dot button
-        document.getElementById('start-mic').addEventListener('click', () => {
-            if (currentEffect === 'new') {
-                // Reset the Free Will effect
-                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
-                    <br><br>
-                    Infront of you, you should have 3 items:
-                    <br><br>
-                    A pen<br>
-                    A wallet<br>
-                    A watch
-                    <br><br>
-                    Pick up one and give it to me.`;
-                initializeFreeWill();
-            } else {
-                // Original microphone functionality
-                microphoneActive = true;
-                startMicrophoneAfterDelay();
-                startMicButton.style.color = '#666';
-                startMicButton.style.borderColor = '#666';
-                startMicButton.disabled = true;
-            }
-        });
-
-        // Button event listeners
-        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
-        document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
-        document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
-        document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
-        document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
-
-        // Existing event listeners
-        settingsButton.addEventListener('click', () => {
-            settingsPanel.classList.add('active');
-        });
-
-        closeSettings.addEventListener('click', () => {
-            settingsPanel.classList.remove('active');
-        });
-
-        // Initialize with Order effect
-        switchToEffect('order');
-
-        // Speech Recognition Setup
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        // Store the original items
-        const items = {
-            'phone': 'a phone',
-            'watch': 'a watch',
-            'airpods': 'Airpods',
-            'wallet': 'a wallet'
-        };
-
-        let micStartTimeout;
-        let microphoneActive = true;
-
-        const micToggle = document.getElementById('mic-toggle');
-        micToggle.addEventListener('click', () => {
-            microphoneActive = false;
-            clearTimeout(micStartTimeout);
-            try {
-                recognition.stop();
-            } catch (err) {
-                // Silently handle any errors when stopping recognition
-            }
-            // Reset the start button
-            startMicButton.style.color = '#FFB800';
-            startMicButton.style.borderColor = '#FFB800';
-            startMicButton.disabled = false;
-        });
-
-        function startMicrophoneAfterDelay() {
-            if (!microphoneActive) return;
-            
-            const delay = parseInt(micDelay.value) * 1000;
-            micStartTimeout = setTimeout(() => {
-                if (!microphoneActive) {
-                    // Reset the start button if microphone was deactivated during delay
-                    startMicButton.style.color = '#FFB800';
-                    startMicButton.style.borderColor = '#FFB800';
-                    startMicButton.disabled = false;
-                    return;
-                }
-                try {
-                    recognition.start();
-                } catch (err) {
-                    // Silently handle any errors when starting recognition
-                }
-            }, delay);
-        }
-
-        // Initialize microphone timer when page loads
-        document.addEventListener("DOMContentLoaded", () => {
-            try {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('portrait');
-                }
-            } catch (error) {
-                // Silently handle the error if locking orientation fails
-            }
-        });
-
-        // Add start button functionality
-        const startMicButton = document.getElementById('start-mic');
-        startMicButton.addEventListener('click', () => {
-            microphoneActive = true;
-            startMicrophoneAfterDelay();
-            startMicButton.style.color = '#666';
-            startMicButton.style.borderColor = '#666';
-            startMicButton.disabled = true;
         });
 
         // Function to extract item order from speech
@@ -853,51 +1091,6 @@
             // Update the hidden paragraph with many line breaks before it
             textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.' + '<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>' + response;
         }
-
-        // Speech recognition event handling
-        let transcript = '';
-
-        recognition.onresult = (event) => {
-            const current = event.resultIndex;
-            transcript = event.results[current][0].transcript.toLowerCase();
-            
-            if (transcript.includes(triggerWord.value.toLowerCase())) {
-                const itemOrder = extractItemOrder(transcript);
-                if (itemOrder.length === 4) {
-                    updateResponseText(itemOrder);
-                    microphoneActive = false;
-                    try {
-                        recognition.stop();
-                    } catch (err) {
-                        // Silently handle any errors when stopping recognition
-                    }
-                }
-            }
-        };
-
-        recognition.onend = () => {
-            // Only restart if still active and haven't found trigger word
-            if (microphoneActive && !transcript.includes(triggerWord.value.toLowerCase())) {
-                try {
-                    recognition.start();
-                } catch (err) {
-                    // Silently handle any errors when restarting recognition
-                }
-            }
-        };
-
-        // Reset microphone timer when settings change
-        micDelay.addEventListener('change', () => {
-            clearTimeout(micStartTimeout);
-            recognition.stop();
-            startMicrophoneAfterDelay();
-        });
-
-        triggerWord.addEventListener('change', () => {
-            clearTimeout(micStartTimeout);
-            recognition.stop();
-            startMicrophoneAfterDelay();
-        });
     </script>
 </body>
 </html>
