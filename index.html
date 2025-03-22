@@ -357,6 +357,10 @@
             } catch (err) {
                 // Silently handle any errors when stopping recognition
             }
+            // Reset the start button
+            startMicButton.style.color = '#FFB800';
+            startMicButton.style.borderColor = '#FFB800';
+            startMicButton.disabled = false;
         });
 
         function startMicrophoneAfterDelay() {
@@ -364,7 +368,13 @@
             
             const delay = parseInt(micDelay.value) * 1000;
             micStartTimeout = setTimeout(() => {
-                if (!microphoneActive) return;
+                if (!microphoneActive) {
+                    // Reset the start button if microphone was deactivated during delay
+                    startMicButton.style.color = '#FFB800';
+                    startMicButton.style.borderColor = '#FFB800';
+                    startMicButton.disabled = false;
+                    return;
+                }
                 try {
                     recognition.start();
                 } catch (err) {
