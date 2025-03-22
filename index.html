@@ -527,19 +527,19 @@
         <div class="toolbar">
             <button class="toolbar-button" id="checklist-btn">
                 <img src="./images/toolbar-checklist.PNG" alt="Checklist">
-                </button>
+            </button>
             <button class="toolbar-button" id="paperclip-btn">
                 <img src="./images/toolbar-paperclip.PNG" alt="Attach">
-                </button>
+            </button>
             <button class="toolbar-button" id="pen-btn">
                 <img src="./images/toolbar-pen.PNG" alt="Draw">
-                </button>
+            </button>
             <button class="toolbar-button" id="writing-btn">
                 <img src="./images/toolbar-writing.PNG" alt="Writing Tools">
-                </button>
+            </button>
             <button class="toolbar-button" id="new-btn">
                 <img src="./images/toolbar-new.PNG" alt="New Note">
-                </button>
+            </button>
         </div>
         <div class="home-indicator"></div>
     </div>
@@ -2031,6 +2031,16 @@
                 `;
             }
         }
+
+        // Add event listeners after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Effect Button Listeners
+            document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
+            document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
+            document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
+            document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
+            document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
+        });
     </script>
 </body>
 </html>
