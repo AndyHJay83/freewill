@@ -1726,63 +1726,35 @@
         // Effect switching functions
         function switchToEffect(effect) {
             currentEffect = effect;
-            const orderSettings = document.getElementById('order-settings');
-            const otherSettings = document.getElementById('other-settings');
-            const freewillSettings = document.getElementById('freewill-settings');
-            const drawingSettings = document.getElementById('drawing-settings');
+            
+            // Hide all settings panels first
+            document.querySelectorAll('.effect-settings').forEach(panel => {
+                panel.style.display = 'none';
+            });
+
+            // Reset UI elements
             const undoButton = document.querySelector('.circle-button:first-child');
             const redoButton = document.querySelector('.circle-button:last-child');
-            const creationTime = document.querySelector('.creation-time');
-            const notesTitle = document.querySelector('.notes-title');
+            undoButton.classList.add('disabled');
+            redoButton.classList.add('disabled');
 
             // Set static creation time
-            creationTime.textContent = '22 March 2025 at 11:35';
-            
+            document.querySelector('.creation-time').textContent = '22 March 2025 at 11:35';
+
             // Reset canvas and text overlay visibility
             drawingCanvas.style.display = 'none';
             textOverlay.style.display = 'block';
-
-            // Update settings panel content
-            if (effect === 'order') {
-                orderSettings.style.display = 'block';
-                otherSettings.style.display = 'none';
-                freewillSettings.style.display = 'none';
-                drawingSettings.style.display = 'none';
-                undoButton.classList.add('disabled');
-                redoButton.classList.add('disabled');
-            } else if (effect === 'pen') {
-                orderSettings.style.display = 'none';
-                otherSettings.style.display = 'none';
-                freewillSettings.style.display = 'none';
-                drawingSettings.style.display = 'block';
-                undoButton.classList.remove('disabled');
-                redoButton.classList.add('disabled');
-                updateDrawingsList();
-                // Show canvas and ensure it's properly sized
-                drawingCanvas.style.display = 'block';
-                textOverlay.style.display = 'none';
-                resizeCanvas();
-            } else if (effect === 'new') {
-                orderSettings.style.display = 'none';
-                otherSettings.style.display = 'none';
-                freewillSettings.style.display = 'block';
-                drawingSettings.style.display = 'none';
-                undoButton.classList.add('disabled');
-                redoButton.classList.add('disabled');
-            } else {
-                orderSettings.style.display = 'none';
-                otherSettings.style.display = 'block';
-                freewillSettings.style.display = 'none';
-                drawingSettings.style.display = 'none';
-                undoButton.classList.add('disabled');
-                redoButton.classList.add('disabled');
-            }
+            
+            // Reset numpad and filtered words containers
+            if (numpadContainer) numpadContainer.style.display = 'none';
+            if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
 
             // Effect-specific changes
             switch(effect) {
                 case 'order':
+                    document.getElementById('order-settings').style.display = 'block';
                     notesTitle.textContent = 'Items';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
+                    textOverlay.innerHTML = `<h1 class="notes-title">Items</h1>
                         <br>
                         Infront of you are 4 items:
                         <br><br>
@@ -1794,9 +1766,11 @@
                         Place these items in any order you wish.
                         <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>`;
                     break;
+                    
                 case 'new':
+                    document.getElementById('freewill-settings').style.display = 'block';
                     notesTitle.textContent = 'Free Will';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                    textOverlay.innerHTML = `<h1 class="notes-title">Free Will</h1>
                         <br><br>
                         Infront of you, you should have 3 items:
                         <br><br>
@@ -1807,33 +1781,47 @@
                         Pick up one and give it to me.`;
                     initializeFreeWill();
                     break;
+                    
                 case 'paperclip':
+                    document.getElementById('other-settings').style.display = 'block';
                     notesTitle.textContent = 'Billet?';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Billet?</h1>`;
+                    textOverlay.innerHTML = `<h1 class="notes-title">Billet?</h1>`;
                     break;
+                    
                 case 'pen':
+                    document.getElementById('drawing-settings').style.display = 'block';
                     notesTitle.textContent = 'Drawing';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Drawing</h1>`;
                     textOverlay.style.display = 'none';
                     drawingCanvas.style.display = 'block';
                     initializeDrawing();
+                    undoButton.classList.remove('disabled');
                     break;
+                    
                 case 'writing':
+                    document.getElementById('other-settings').style.display = 'block';
                     notesTitle.textContent = 'Word Filter';
                     textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
-                    currentCode = '';
-                    numpadDisplay.textContent = '';
-                    numpadContainer.style.display = 'block';
-                    filteredWordsContainer.style.display = 'none';
-                    // Load word list when switching to writing effect
-                    fetch('data/Long_Nouns.txt')
-                        .then(response => response.text())
-                        .then(text => {
-                            window.wordList = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
-                        })
-                        .catch(error => console.error('Error loading word list:', error));
+                    
+                    // Show numpad
+                    if (numpadContainer) {
+                        currentCode = '';
+                        numpadDisplay.textContent = '';
+                        numpadContainer.style.display = 'block';
+                        
+                        // Load word list
+                        fetch('data/Long_Nouns.txt')
+                            .then(response => response.text())
+                            .then(text => {
+                                window.wordList = text.split('\n')
+                                    .map(word => word.trim())
+                                    .filter(word => word.length > 0);
+                            })
+                            .catch(error => console.error('Error loading word list:', error));
+                    }
                     break;
+                    
                 default:
+                    document.getElementById('other-settings').style.display = 'block';
                     notesTitle.textContent = 'Empty';
                     textOverlay.innerHTML = `<h1 class="notes-title">Empty</h1>`;
             }
@@ -2007,40 +1995,3 @@
                 
                 // Check first vowel position
                 if (vowelPositions[0] !== firstVowelPos) return false;
-
-                // Check second vowel position
-                if (vowelPositions[1] !== secondVowelPos) return false;
-
-                // Check first letter shape
-                const shape = getLetterShape(word[0]);
-                if (shape !== firstLetterShape) return false;
-
-                return true;
-            });
-
-            // Display filtered words
-            const filteredWordsContainer = document.getElementById('filtered-words');
-            if (filteredWords.length === 0) {
-                filteredWordsContainer.innerHTML = '<p>No words found matching the criteria.</p>';
-            } else {
-                filteredWordsContainer.innerHTML = `
-                    <p>Found ${filteredWords.length} matching words:</p>
-                    <div class="word-list">
-                        ${filteredWords.map(word => `<span class="word">${word}</span>`).join(' ')}
-                    </div>
-                `;
-            }
-        }
-
-        // Add event listeners after DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Effect Button Listeners
-            document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
-            document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
-            document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
-            document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
-            document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
-        });
-    </script>
-</body>
-</html>
