@@ -92,6 +92,15 @@
             color: white;
             font-size: 18px;
             line-height: 1.5;
+            outline: none;
+            caret-color: #007AFF;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        #text-overlay:empty:before {
+            content: attr(placeholder);
+            color: #666;
         }
 
         .toolbar {
@@ -173,7 +182,7 @@
             </div>
         </div>
 
-        <div id="text-overlay">
+        <div id="text-overlay" contenteditable="true" spellcheck="true">
             Infront of you are 4 items:
             <br><br>
             A phone<br>
