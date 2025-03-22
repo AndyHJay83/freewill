@@ -412,22 +412,22 @@
     <div id="app">
         <div class="header">
             <div class="header-top">
-                <div class="header-left">
-                    <span class="back-button"></span>
+            <div class="header-left">
+                <span class="back-button"></span>
                     <span id="mic-toggle" style="cursor: pointer;">All on My iPhone</span>
-                </div>
-                <div class="header-center">
+            </div>
+            <div class="header-center">
                     <button class="circle-button disabled">↺</button>
                     <button class="circle-button disabled">↻</button>
-                </div>
-                <div class="header-right">
+            </div>
+            <div class="header-right">
                     <button id="settings-button" style="background: none; border: none; padding: 0; margin: 0;">
                         <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFB800">
                             <path d="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/>
                         </svg>
                     </button>
                     <button id="start-mic" class="circle-button">⋯</button>
-                </div>
+            </div>
             </div>
             <div class="creation-time">22 March 2025 at 11:35</div>
         </div>
@@ -451,19 +451,19 @@
         <div class="toolbar">
             <button class="toolbar-button" id="checklist-btn">
                 <img src="./images/toolbar-checklist.PNG" alt="Checklist">
-            </button>
+                </button>
             <button class="toolbar-button" id="paperclip-btn">
                 <img src="./images/toolbar-paperclip.PNG" alt="Attach">
-            </button>
+                </button>
             <button class="toolbar-button" id="pen-btn">
                 <img src="./images/toolbar-pen.PNG" alt="Draw">
-            </button>
+                </button>
             <button class="toolbar-button" id="writing-btn">
                 <img src="./images/toolbar-writing.PNG" alt="Writing Tools">
-            </button>
+                </button>
             <button class="toolbar-button" id="new-btn">
                 <img src="./images/toolbar-new.PNG" alt="New Note">
-            </button>
+                </button>
         </div>
         <div class="home-indicator"></div>
     </div>
@@ -912,9 +912,7 @@
                 return;
             }
 
-            // Generate a filename based on the title (remove spaces and special characters)
-            const filename = title.toLowerCase().replace(/[^a-z0-9]/g, '') + '.png';
-            const imagePath = './images/drawings/' + filename;
+            const drawingData = canvas.toDataURL();
             
             if (isEditingDrawing) {
                 const index = drawings.findIndex(d => d.id === editingDrawingId);
@@ -922,7 +920,7 @@
                     ...drawings[index],
                     title,
                     keyword,
-                    imagePath,
+                    data: drawingData,
                     lastModified: new Date().toISOString()
                 };
             } else {
@@ -930,17 +928,11 @@
                     id: Date.now().toString(),
                     title,
                     keyword,
-                    imagePath,
+                    data: drawingData,
                     created: new Date().toISOString(),
                     lastModified: new Date().toISOString()
                 });
             }
-
-            // Create a download link to save the file
-            const link = document.createElement('a');
-            link.download = filename;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
 
             localStorage.setItem('drawings', JSON.stringify(drawings));
             updateDrawingsList();
@@ -1263,7 +1255,7 @@
                     // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
-                        newText = '<br>'.repeat(50) + firstMessage;
+                        newText = '<br>'.repeat(100) + firstMessage + '<br>'.repeat(100);
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         const finalMessage = finalTemplate
@@ -1271,8 +1263,8 @@
                             .replace('[SECOND]', selectedItems[1].replace('A ', ''))
                             .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        newText = '<br>'.repeat(50) + secondMessage +
-                                '<br>'.repeat(50) + finalMessage;
+                        newText = '<br>'.repeat(100) + secondMessage +
+                                '<br>'.repeat(100) + finalMessage;
                     }
 
                     textOverlay.innerHTML += newText;
