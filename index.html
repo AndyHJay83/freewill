@@ -256,7 +256,7 @@
             A wallet
             <br><br>
             Place these items in any order you wish.
-            <br><br><br>
+            <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
         </div>
 
         <div class="toolbar">
@@ -404,8 +404,8 @@
             // Split content at the last visible paragraph
             const content = textOverlay.innerHTML.split('Place these items in any order you wish.');
             
-            // Update the hidden paragraph
-            textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.<br><br>' + response;
+            // Update the hidden paragraph with many line breaks before it
+            textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.' + '<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>' + response;
         }
 
         // Speech recognition event handling
