@@ -125,21 +125,73 @@
         }
 
         .toolbar {
-            height: 120px;
+            height: 85px;
             background-color: #1C1C1E;
             border-top: 1px solid #38383A;
-            padding: 0;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             position: relative;
             z-index: 2;
-            display: flex;
-            flex-direction: column;
         }
 
-        .toolbar-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            pointer-events: none;
+        .drawing-tools {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .tool {
+            width: 24px;
+            height: 40px;
+            background: none;
+            border: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tool svg {
+            width: 24px;
+            height: 24px;
+            fill: #ffffff;
+        }
+
+        .tool::after {
+            content: "";
+            width: 3px;
+            height: 3px;
+            background-color: #666;
+            border-radius: 50%;
+        }
+
+        .tool.active::after {
+            background-color: #007AFF;
+        }
+
+        .color-picker {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.3);
+        }
+
+        .add-button {
+            width: 30px;
+            height: 30px;
+            background: none;
+            border: none;
+            color: #007AFF;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
         }
 
         .home-indicator {
@@ -147,23 +199,7 @@
             height: 5px;
             background: #808080;
             border-radius: 100px;
-            margin: 8px auto;
-        }
-
-        /* Remove all the old toolbar styles */
-        .drawing-tools,
-        .tool,
-        .pen-tool,
-        .pen-white,
-        .pen-marker,
-        .pen-tip,
-        .color-picker,
-        .add-button,
-        .size-indicator,
-        .ruler-tool,
-        .ruler-marks,
-        .ruler-mark {
-            display: none;
+            margin: 5px auto;
         }
     </style>
 </head>
@@ -194,7 +230,40 @@
         </div>
 
         <div class="toolbar">
-            <img src="toolbar.png" alt="Drawing Tools" class="toolbar-image">
+            <div class="drawing-tools">
+                <button class="tool active">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3,17.25V21h3.75L17.81,9.94l-3.75-3.75L3,17.25z M20.71,7.04c0.39-0.39,0.39-1.02,0-1.41l-2.34-2.34 c-0.39-0.39-1.02-0.39-1.41,0l-1.83,1.83l3.75,3.75L20.71,7.04z"/>
+                    </svg>
+                </button>
+                <button class="tool">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4.5,21h15c0.8,0,1.5-0.7,1.5-1.5v-3c0-0.8-0.7-1.5-1.5-1.5h-15C3.7,15,3,15.7,3,16.5v3C3,20.3,3.7,21,4.5,21z M19.5,3h-15 C3.7,3,3,3.7,3,4.5v3C3,8.3,3.7,9,4.5,9h15C20.3,9,21,8.3,21,7.5v-3C21,3.7,20.3,3,19.5,3z"/>
+                    </svg>
+                </button>
+                <button class="tool">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7,14c-1.66,0-3,1.34-3,3c0,1.31-1.16,2-2,2c0.92,1.22,2.49,2,4,2c2.21,0,4-1.79,4-4C10,15.34,8.66,14,7,14z M20.71,4.63 l-1.34-1.34c-0.39-0.39-1.02-0.39-1.41,0L9,12.25L11.75,15l8.96-8.96C20.71,5.65,20.71,5.02,20.71,4.63z"/>
+                    </svg>
+                </button>
+                <button class="tool">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12,22c1.1,0,2-0.9,2-2h-4C10,21.1,10.9,22,12,22z M18,16v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-0.83-0.67-1.5-1.5-1.5 S10.5,3.17,10.5,4v0.68C7.63,5.36,6,7.92,6,11v5l-2,2v1h16v-1L18,16z"/>
+                    </svg>
+                </button>
+                <button class="tool">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21,6H3C2.45,6,2,6.45,2,7v10c0,0.55,0.45,1,1,1h18c0.55,0,1-0.45,1-1V7C22,6.45,21.55,6,21,6z M20,16H4V8h16V16z"/>
+                    </svg>
+                </button>
+                <button class="tool">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3,17.25V21h3.75L17.81,9.94l-3.75-3.75L3,17.25z M20.71,7.04c0.39-0.39,0.39-1.02,0-1.41l-2.34-2.34 c-0.39-0.39-1.02-0.39-1.41,0l-1.83,1.83l3.75,3.75L20.71,7.04z"/>
+                    </svg>
+                </button>
+                <button class="color-picker"></button>
+            </div>
+            <button class="add-button">+</button>
         </div>
         <div class="home-indicator"></div>
     </div>
