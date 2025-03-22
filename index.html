@@ -551,106 +551,111 @@
         let drawingHistory = [];
         let currentHistoryIndex = -1;
 
-        // Effect switching functions
-        function switchToEffect(effect) {
-            currentEffect = effect;
-            const orderSettings = document.getElementById('order-settings');
-            const otherSettings = document.getElementById('other-settings');
-            const freewillSettings = document.getElementById('freewill-settings');
-            const drawingSettings = document.getElementById('drawing-settings');
-            const undoButton = document.querySelector('.circle-button:first-child');
-            const redoButton = document.querySelector('.circle-button:last-child');
-            const creationTime = document.querySelector('.creation-time');
-            const notesTitle = document.querySelector('.notes-title');
+        // Default drawings that will always be available
+        const defaultDrawings = [
+            // You can add your drawings here in this format:
+            /*{
+                id: 'default-1',
+                title: 'Example Drawing',
+                keyword: 'example',
+                data: 'YOUR_BASE64_IMAGE_DATA',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            }*/
+        ];
 
-            // Set static creation time
-            creationTime.textContent = '22 March 2025 at 11:35';
+        // Initialize drawings from localStorage and merge with defaults
+        function initializeDrawings() {
+            const userDrawings = JSON.parse(localStorage.getItem('drawings') || '[]');
+            
+            // Filter out any default drawings that might have been saved
+            const filteredUserDrawings = userDrawings.filter(drawing => 
+                !drawing.id.startsWith('default-')
+            );
+            
+            // Merge default drawings with user drawings
+            drawings = [...defaultDrawings, ...filteredUserDrawings];
+            
+            // Save the merged list back to localStorage
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            
+            updateDrawingsList();
+        }
 
-            // Reset canvas and text overlay visibility
-            drawingCanvas.style.display = 'none';
-            textOverlay.style.display = 'block';
-
-            // Update settings panel content
-            if (effect === 'order') {
-                orderSettings.style.display = 'block';
-                otherSettings.style.display = 'none';
-                freewillSettings.style.display = 'none';
-                drawingSettings.style.display = 'none';
-                undoButton.classList.add('disabled');
-                redoButton.classList.add('disabled');
-            } else if (effect === 'pen') {
-                orderSettings.style.display = 'none';
-                otherSettings.style.display = 'none';
-                freewillSettings.style.display = 'none';
-                drawingSettings.style.display = 'block';
-                undoButton.classList.remove('disabled');
-                redoButton.classList.add('disabled');
-                updateDrawingsList();
-                // Show canvas and ensure it's properly sized
-                drawingCanvas.style.display = 'block';
-                textOverlay.style.display = 'none';
-                resizeCanvas();
-            } else if (effect === 'new') {
-                orderSettings.style.display = 'none';
-                otherSettings.style.display = 'none';
-                freewillSettings.style.display = 'block';
-                drawingSettings.style.display = 'none';
-                undoButton.classList.add('disabled');
-                redoButton.classList.add('disabled');
-            } else {
-                orderSettings.style.display = 'none';
-                otherSettings.style.display = 'block';
-                freewillSettings.style.display = 'none';
-                drawingSettings.style.display = 'none';
-                undoButton.classList.add('disabled');
-                redoButton.classList.add('disabled');
+        // Modify the delete function to prevent deleting default drawings
+        function deleteDrawing() {
+            if (!drawingToDelete) return;
+            
+            // Check if trying to delete a default drawing
+            if (drawingToDelete.startsWith('default-')) {
+                alert('Default drawings cannot be deleted');
+                hideDeletePopup();
+                return;
             }
+            
+            drawings = drawings.filter(d => d.id !== drawingToDelete);
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            updateDrawingsList();
+            hideDeletePopup();
+        }
 
-            // Effect-specific changes
-            switch(effect) {
-                case 'order':
-                    notesTitle.textContent = 'Items';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
-                        <br>
-                        Infront of you are 4 items:
-                        <br><br>
-                        A phone<br>
-                        A watch<br>
-                        Airpods<br>
-                        A wallet
-                        <br><br>
-                        Place these items in any order you wish.
-                        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>`;
-                    break;
-                case 'new':
-                    notesTitle.textContent = 'Free Will';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
-                        <br><br>
-                        Infront of you, you should have 3 items:
-                        <br><br>
-                        A pen<br>
-                        A wallet<br>
-                        A watch
-                        <br><br>
-                        Pick up one and give it to me.`;
-                    initializeFreeWill();
-                    break;
-                case 'paperclip':
-                    notesTitle.textContent = 'Billet?';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Billet?</h1>`;
-                    break;
-                case 'pen':
-                    notesTitle.textContent = 'Drawing';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Drawing</h1>`;
-                    textOverlay.style.display = 'none';
-                    drawingCanvas.style.display = 'block';
-                    initializeDrawing();
-                    break;
-                case 'writing':
-                    notesTitle.textContent = 'Empty';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Empty</h1>`;
-                    break;
-            }
+        // Update the drawing list to show a lock icon for default drawings
+        function updateDrawingsList() {
+            const drawingList = document.getElementById('drawing-list');
+            if (!drawingList) return;
+
+            drawingList.innerHTML = drawings
+                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+                .map(drawing => `
+                    <div class="drawing-item" data-id="${drawing.id}">
+                        <div class="drawing-item-title">
+                            ${drawing.title}
+                            ${drawing.id.startsWith('default-') ? 
+                                '<span style="color: #666; font-size: 12px;"> (default)</span>' : 
+                                ''}
+                        </div>
+                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
+                    </div>
+                `).join('');
+
+            // Add long-press handlers to drawing items
+            document.querySelectorAll('.drawing-item').forEach(item => {
+                const isDefault = item.dataset.id.startsWith('default-');
+                
+                if (!isDefault) {
+                    item.addEventListener('touchstart', () => {
+                        drawingPressTimer = setTimeout(() => {
+                            showDeletePopup(item.dataset.id);
+                        }, 500);
+                    });
+
+                    item.addEventListener('touchend', () => {
+                        clearTimeout(drawingPressTimer);
+                    });
+
+                    item.addEventListener('touchmove', () => {
+                        clearTimeout(drawingPressTimer);
+                    });
+                }
+
+                // Regular click handler for loading the drawing
+                item.addEventListener('click', () => {
+                    const drawingId = item.dataset.id;
+                    const drawing = drawings.find(d => d.id === drawingId);
+                    if (drawing && drawing.data) {
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            drawingHistory = [canvas.toDataURL()];
+                            currentHistoryIndex = 0;
+                        };
+                        img.src = drawing.data;
+                        switchToEffect('pen');
+                        settingsPanel.classList.remove('active');
+                    }
+                });
+            });
         }
 
         // Drawing functionality
@@ -864,56 +869,6 @@
             hideDrawingPopup();
         }
 
-        function updateDrawingsList() {
-            const drawingList = document.getElementById('drawing-list');
-            if (!drawingList) return;
-
-            drawingList.innerHTML = drawings
-                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
-                .map(drawing => `
-                    <div class="drawing-item" data-id="${drawing.id}">
-                        <div class="drawing-item-title">${drawing.title}</div>
-                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
-                    </div>
-                `).join('');
-
-            // Add long-press handlers to drawing items
-            document.querySelectorAll('.drawing-item').forEach(item => {
-                item.addEventListener('touchstart', () => {
-                    drawingPressTimer = setTimeout(() => {
-                        showDeletePopup(item.dataset.id);
-                    }, 500); // Show delete popup after 500ms hold
-                });
-
-                item.addEventListener('touchend', () => {
-                    clearTimeout(drawingPressTimer);
-                });
-
-                item.addEventListener('touchmove', () => {
-                    clearTimeout(drawingPressTimer);
-                });
-
-                // Regular click handler for loading the drawing
-                item.addEventListener('click', () => {
-                    const drawingId = item.dataset.id;
-                    const drawing = drawings.find(d => d.id === drawingId);
-                    if (drawing && drawing.data) {
-                        const img = new Image();
-                        img.onload = function() {
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.drawImage(img, 0, 0);
-                            // Reset drawing history after loading
-                            drawingHistory = [canvas.toDataURL()];
-                            currentHistoryIndex = 0;
-                        };
-                        img.src = drawing.data;
-                        switchToEffect('pen');
-                        settingsPanel.classList.remove('active');
-                    }
-                });
-            });
-        }
-
         function showDeletePopup(drawingId) {
             drawingToDelete = drawingId;
             deletePopup.classList.add('active');
@@ -923,19 +878,6 @@
             deletePopup.classList.remove('active');
             drawingToDelete = null;
         }
-
-        function deleteDrawing() {
-            if (!drawingToDelete) return;
-            
-            drawings = drawings.filter(d => d.id !== drawingToDelete);
-            localStorage.setItem('drawings', JSON.stringify(drawings));
-            updateDrawingsList();
-            hideDeletePopup();
-        }
-
-        // Add event listeners for delete popup
-        cancelDeleteBtn.addEventListener('click', hideDeletePopup);
-        confirmDeleteBtn.addEventListener('click', deleteDrawing);
 
         function saveDrawingState() {
             if (currentHistoryIndex < drawingHistory.length - 1) {
