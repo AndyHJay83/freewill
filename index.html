@@ -1552,10 +1552,14 @@
         Object.entries(effectButtons).forEach(([buttonId, effect]) => {
             const button = document.getElementById(buttonId);
             if (button) {
+                console.log('Adding click listener to button:', buttonId, 'for effect:', effect); // Debug log
                 button.addEventListener('click', () => {
+                    console.log('Button clicked:', buttonId); // Debug log
                     console.log('Switching to effect:', effect); // Debug log
                     switchToEffect(effect);
                 });
+            } else {
+                console.error('Button not found:', buttonId); // Debug log
             }
         });
 
