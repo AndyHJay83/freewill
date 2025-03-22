@@ -301,6 +301,7 @@
             padding: 15px;
             margin-bottom: 10px;
             cursor: pointer;
+            position: relative;
         }
 
         .drawing-item-title {
@@ -311,6 +312,55 @@
         .drawing-item-keyword {
             font-size: 13px;
             color: #666;
+        }
+
+        .delete-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1C1C1E;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 350px;
+            z-index: 2000;
+            display: none;
+            text-align: center;
+        }
+
+        .delete-popup.active {
+            display: block;
+        }
+
+        .delete-popup-title {
+            font-size: 17px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .delete-popup-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-popup-button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .delete-popup-button.cancel {
+            background: #2C2C2E;
+            color: #007AFF;
+        }
+
+        .delete-popup-button.delete {
+            background: #FF3B30;
+            color: white;
         }
 
         .countdown {
@@ -458,6 +508,15 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Popup -->
+    <div class="delete-popup" id="delete-popup">
+        <div class="delete-popup-title">Delete Drawing?</div>
+        <div class="delete-popup-buttons">
+            <button class="delete-popup-button cancel" id="cancel-delete">Cancel</button>
+            <button class="delete-popup-button delete" id="confirm-delete">Delete</button>
+        </div>
+    </div>
+
     <script>
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
@@ -482,6 +541,15 @@
         const drawingKeyword = document.getElementById('drawing-keyword');
         const saveDrawingBtn = document.getElementById('save-drawing');
         const countdownDisplay = document.getElementById('countdown');
+
+        let drawingToDelete = null;
+        const deletePopup = document.getElementById('delete-popup');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        const confirmDeleteBtn = document.getElementById('confirm-delete');
+        let drawingPressTimer;
+        let undoPressTimer;
+        let drawingHistory = [];
+        let currentHistoryIndex = -1;
 
         // Effect switching functions
         function switchToEffect(effect) {
@@ -647,7 +715,10 @@
         }
 
         function stopDrawing() {
-            isDrawing = false;
+            if (isDrawing) {
+                isDrawing = false;
+                saveDrawingState();
+            }
         }
 
         function initializeDrawing() {
@@ -666,7 +737,7 @@
             ctx.lineCap = 'round';
             ctx.lineWidth = 3;
 
-            // Remove any existing listeners first
+            // Remove any existing listeners
             canvas.removeEventListener('mousedown', startDrawing);
             canvas.removeEventListener('mousemove', draw);
             canvas.removeEventListener('mouseup', stopDrawing);
@@ -688,33 +759,49 @@
             window.removeEventListener('resize', resizeCanvas);
             window.addEventListener('resize', resizeCanvas);
 
-            const undoButton = document.querySelector('.circle-button:first-child');
+            // Initialize drawing history
+            drawingHistory = [canvas.toDataURL()];
+            currentHistoryIndex = 0;
 
-            // Double tap detection for undo button to clear canvas
-            undoButton.addEventListener('click', () => {
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - lastTapTime;
-                
-                if (tapLength < 500 && tapLength > 0) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-                
-                lastTapTime = currentTime;
+            const undoButton = document.querySelector('.circle-button:first-child');
+            
+            // Setup undo button with both click and hold functionality
+            undoButton.addEventListener('mousedown', () => {
+                undoPressTimer = setTimeout(() => {
+                    clearCanvas();
+                }, 500); // Clear canvas after 500ms hold
             });
 
-            // Initialize drawing controls object
-            drawingControls = {
-                clearCanvas: () => ctx.clearRect(0, 0, canvas.width, canvas.height),
-                saveDrawingState: () => canvas.toDataURL(),
-                loadDrawingState: (dataUrl) => {
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0);
-                    };
-                    img.src = dataUrl;
+            undoButton.addEventListener('mouseup', () => {
+                if (undoPressTimer) {
+                    clearTimeout(undoPressTimer);
+                    if (!undoButton.classList.contains('disabled')) {
+                        undo();
+                    }
                 }
-            };
+            });
+
+            undoButton.addEventListener('mouseleave', () => {
+                if (undoPressTimer) {
+                    clearTimeout(undoPressTimer);
+                }
+            });
+
+            // Touch events for undo button
+            undoButton.addEventListener('touchstart', () => {
+                undoPressTimer = setTimeout(() => {
+                    clearCanvas();
+                }, 500);
+            });
+
+            undoButton.addEventListener('touchend', () => {
+                if (undoPressTimer) {
+                    clearTimeout(undoPressTimer);
+                    if (!undoButton.classList.contains('disabled')) {
+                        undo();
+                    }
+                }
+            });
         }
 
         // Save drawing functionality
@@ -790,8 +877,23 @@
                     </div>
                 `).join('');
 
-            // Add click listeners to drawing items
+            // Add long-press handlers to drawing items
             document.querySelectorAll('.drawing-item').forEach(item => {
+                item.addEventListener('touchstart', () => {
+                    drawingPressTimer = setTimeout(() => {
+                        showDeletePopup(item.dataset.id);
+                    }, 500); // Show delete popup after 500ms hold
+                });
+
+                item.addEventListener('touchend', () => {
+                    clearTimeout(drawingPressTimer);
+                });
+
+                item.addEventListener('touchmove', () => {
+                    clearTimeout(drawingPressTimer);
+                });
+
+                // Regular click handler for loading the drawing
                 item.addEventListener('click', () => {
                     const drawingId = item.dataset.id;
                     const drawing = drawings.find(d => d.id === drawingId);
@@ -802,6 +904,67 @@
                     }
                 });
             });
+        }
+
+        function showDeletePopup(drawingId) {
+            drawingToDelete = drawingId;
+            deletePopup.classList.add('active');
+        }
+
+        function hideDeletePopup() {
+            deletePopup.classList.remove('active');
+            drawingToDelete = null;
+        }
+
+        function deleteDrawing() {
+            if (!drawingToDelete) return;
+            
+            drawings = drawings.filter(d => d.id !== drawingToDelete);
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            updateDrawingsList();
+            hideDeletePopup();
+        }
+
+        // Add event listeners for delete popup
+        cancelDeleteBtn.addEventListener('click', hideDeletePopup);
+        confirmDeleteBtn.addEventListener('click', deleteDrawing);
+
+        function saveDrawingState() {
+            if (currentHistoryIndex < drawingHistory.length - 1) {
+                drawingHistory = drawingHistory.slice(0, currentHistoryIndex + 1);
+            }
+            drawingHistory.push(canvas.toDataURL());
+            currentHistoryIndex++;
+            
+            // Enable/disable undo button based on history
+            const undoButton = document.querySelector('.circle-button:first-child');
+            undoButton.classList.toggle('disabled', currentHistoryIndex <= 0);
+        }
+
+        function undo() {
+            if (currentHistoryIndex <= 0) return;
+            
+            currentHistoryIndex--;
+            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = drawingHistory[currentHistoryIndex];
+
+            // Update undo button state
+            const undoButton = document.querySelector('.circle-button:first-child');
+            undoButton.classList.toggle('disabled', currentHistoryIndex <= 0);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawingHistory = [canvas.toDataURL()];
+            currentHistoryIndex = 0;
+            
+            // Disable undo button after clear
+            const undoButton = document.querySelector('.circle-button:first-child');
+            undoButton.classList.add('disabled');
         }
 
         // Voice activation functionality
@@ -1140,34 +1303,6 @@
                 startMicButton.disabled = true;
             }
         });
-
-        // Update the drawings list function to ensure it's working
-        function updateDrawingsList() {
-            const drawingList = document.getElementById('drawing-list');
-            if (!drawingList) return;
-
-            drawingList.innerHTML = drawings
-                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
-                .map(drawing => `
-                    <div class="drawing-item" data-id="${drawing.id}">
-                        <div class="drawing-item-title">${drawing.title}</div>
-                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
-                    </div>
-                `).join('');
-
-            // Add click listeners to drawing items
-            document.querySelectorAll('.drawing-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const drawingId = item.dataset.id;
-                    const drawing = drawings.find(d => d.id === drawingId);
-                    if (drawing && drawing.data) {
-                        drawingControls.loadDrawingState(drawing.data);
-                        switchToEffect('pen');
-                        settingsPanel.classList.remove('active');
-                    }
-                });
-            });
-        }
 
         // Initialize drawings from localStorage
         function initializeDrawings() {
