@@ -141,12 +141,10 @@
             justify-content: center;
         }
 
-        .toolbar-button svg {
+        .toolbar-button img {
             width: 28px;
             height: 28px;
-            fill: none;
-            stroke: #FFB800;
-            stroke-width: 1;
+            object-fit: contain;
         }
 
         .home-indicator {
@@ -262,40 +260,19 @@
 
         <div class="toolbar">
             <button class="toolbar-button">
-                <svg viewBox="0 0 24 24">
-                    <g fill="none" stroke="#FFB800" stroke-width="1.5">
-                        <path d="M4 6h16"/>
-                        <path d="M4 12h16"/>
-                        <circle cx="6" cy="6" r="1.5" fill="#FFB800"/>
-                        <path d="M5.5 6l1 1"/>
-                        <circle cx="6" cy="12" r="1.5"/>
-                    </g>
-                </svg>
+                <img src="images/toolbar-checklist.png" alt="Checklist">
             </button>
             <button class="toolbar-button">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 3c-1.5 0-2.5 1-2.5 2.5v10c0 1-.5 1.5-1.5 1.5s-1.5-.5-1.5-1.5V7" fill="none" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" transform="rotate(45, 12, 12)"/>
-                </svg>
+                <img src="images/toolbar-paperclip.png" alt="Attach">
             </button>
             <button class="toolbar-button">
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="8" stroke="#FFB800" stroke-width="1.5" fill="none"/>
-                    <path d="M12 8v8M8 12l8-8" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
+                <img src="images/toolbar-pen.png" alt="Draw">
             </button>
             <button class="toolbar-button">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 4c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8" stroke="#FFB800" stroke-width="1.5" fill="none" stroke-dasharray="3,3"/>
-                    <path d="M16 8l-4 4" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M12 12l-2-2" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
+                <img src="images/toolbar-writing.png" alt="Writing Tools">
             </button>
             <button class="toolbar-button">
-                <svg viewBox="0 0 24 24">
-                    <rect x="4" y="6" width="14" height="14" rx="2" stroke="#FFB800" stroke-width="1.5" fill="none"/>
-                    <path d="M18 6l-4-4" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M14 2l4 4" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
+                <img src="images/toolbar-new.png" alt="New Note">
             </button>
         </div>
         <div class="home-indicator"></div>
