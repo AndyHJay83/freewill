@@ -391,7 +391,14 @@
                     break;
                 case 'new':
                     notesTitle.textContent = 'Free Will';
-                    textOverlay.innerHTML = '';
+                    textOverlay.innerHTML = `Infront of you, you should have 3 items:
+                        <br><br>
+                        A pen<br>
+                        A wallet<br>
+                        A watch
+                        <br><br>
+                        Pick up one and give it to me.`;
+                    initializeFreeWill();
                     break;
                 case 'paperclip':
                     notesTitle.textContent = 'Billet?';
@@ -502,6 +509,63 @@
             canvas.addEventListener('touchstart', startDrawing);
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', () => isDrawing = false);
+        }
+
+        // Free Will functionality
+        function initializeFreeWill() {
+            const textOverlay = document.getElementById('text-overlay');
+            const items = ['A pen', 'A wallet', 'A watch'];
+            let scrollCount = 0;
+            let selectedItems = [];
+            let startY = 0;
+            let startX = 0;
+
+            function getColumnFromX(x) {
+                const width = window.innerWidth;
+                const columnWidth = width / 3;
+                return Math.floor(x / columnWidth);
+            }
+
+            function handleSwipe(e) {
+                if (scrollCount >= 2) return; // Stop after two swipes
+
+                const touch = e.touches[0];
+                const column = getColumnFromX(touch.clientX);
+                const item = items[column];
+
+                if (!selectedItems.includes(item)) {
+                    selectedItems.push(item);
+                    scrollCount++;
+
+                    // Generate new text based on scroll count
+                    let newText = '';
+                    if (scrollCount === 1) {
+                        newText = '<br>'.repeat(50) + 'Great. Now pick up another item and put it in your pocket.';
+                    } else if (scrollCount === 2) {
+                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
+                        newText = '<br>'.repeat(50) + 'Perfect. And the last item, keep in your hands.' +
+                                '<br>'.repeat(50) + `If I have influenced you correctly, I should be holding ${selectedItems[0]}, you should be holding ${unscrolledItem}, and ${selectedItems[1]} should be in your pocket!`;
+                    }
+
+                    textOverlay.innerHTML += newText;
+                }
+            }
+
+            textOverlay.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
+            });
+
+            textOverlay.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const deltaY = touch.clientY - startY;
+                const deltaX = touch.clientX - startX;
+
+                // Only trigger if it's a vertical swipe (up)
+                if (deltaY < -50 && Math.abs(deltaX) < Math.abs(deltaY)) {
+                    handleSwipe(e);
+                }
+            });
         }
 
         // Button event listeners
