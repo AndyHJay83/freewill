@@ -301,6 +301,38 @@
             padding: 15px;
             margin-bottom: 10px;
             cursor: pointer;
+            position: relative;
+            transition: transform 0.3s ease;
+            touch-action: pan-y pan-x;
+        }
+
+        .drawing-item-content {
+            transition: transform 0.3s ease;
+        }
+
+        .drawing-item-delete {
+            position: absolute;
+            right: -80px;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            background: #FF3B30;
+            border-radius: 0 10px 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 17px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawing-item.swiped {
+            transform: translateX(-80px);
+        }
+
+        .drawing-item.swiped .drawing-item-delete {
+            opacity: 1;
         }
 
         .drawing-item-title {
@@ -785,14 +817,80 @@
                 .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
                 .map(drawing => `
                     <div class="drawing-item" data-id="${drawing.id}">
-                        <div class="drawing-item-title">${drawing.title}</div>
-                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
+                        <div class="drawing-item-content">
+                            <div class="drawing-item-title">${drawing.title}</div>
+                            <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
+                        </div>
+                        <div class="drawing-item-delete">Delete</div>
                     </div>
                 `).join('');
 
-            // Add click listeners to drawing items
+            // Add swipe and click handlers to drawing items
             document.querySelectorAll('.drawing-item').forEach(item => {
-                item.addEventListener('click', () => {
+                let startX = 0;
+                let currentX = 0;
+                let isSwiping = false;
+
+                function handleTouchStart(e) {
+                    startX = e.touches[0].clientX;
+                    currentX = startX;
+                    isSwiping = true;
+                }
+
+                function handleTouchMove(e) {
+                    if (!isSwiping) return;
+                    
+                    currentX = e.touches[0].clientX;
+                    const deltaX = currentX - startX;
+                    
+                    // Only allow left swipe up to -80px
+                    if (deltaX < 0 && deltaX > -80) {
+                        item.style.transform = `translateX(${deltaX}px)`;
+                    }
+                }
+
+                function handleTouchEnd() {
+                    if (!isSwiping) return;
+                    isSwiping = false;
+                    
+                    const deltaX = currentX - startX;
+                    
+                    // If swiped more than halfway (-40px), snap to delete position
+                    if (deltaX < -40) {
+                        item.classList.add('swiped');
+                    } else {
+                        item.classList.remove('swiped');
+                        item.style.transform = '';
+                    }
+                }
+
+                // Add touch event listeners for swipe
+                item.addEventListener('touchstart', handleTouchStart);
+                item.addEventListener('touchmove', handleTouchMove);
+                item.addEventListener('touchend', handleTouchEnd);
+
+                // Click handler for the drawing item
+                item.addEventListener('click', (e) => {
+                    // If clicking the delete button
+                    if (e.target.classList.contains('drawing-item-delete')) {
+                        const drawingId = item.dataset.id;
+                        // Remove from array
+                        drawings = drawings.filter(d => d.id !== drawingId);
+                        // Update localStorage
+                        localStorage.setItem('drawings', JSON.stringify(drawings));
+                        // Update the list
+                        updateDrawingsList();
+                        return;
+                    }
+
+                    // If the item is swiped, reset it
+                    if (item.classList.contains('swiped')) {
+                        item.classList.remove('swiped');
+                        item.style.transform = '';
+                        return;
+                    }
+
+                    // Regular click handler for loading the drawing
                     const drawingId = item.dataset.id;
                     const drawing = drawings.find(d => d.id === drawingId);
                     if (drawing && drawing.data) {
@@ -1140,34 +1238,6 @@
                 startMicButton.disabled = true;
             }
         });
-
-        // Update the drawings list function to ensure it's working
-        function updateDrawingsList() {
-            const drawingList = document.getElementById('drawing-list');
-            if (!drawingList) return;
-
-            drawingList.innerHTML = drawings
-                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
-                .map(drawing => `
-                    <div class="drawing-item" data-id="${drawing.id}">
-                        <div class="drawing-item-title">${drawing.title}</div>
-                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
-                    </div>
-                `).join('');
-
-            // Add click listeners to drawing items
-            document.querySelectorAll('.drawing-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const drawingId = item.dataset.id;
-                    const drawing = drawings.find(d => d.id === drawingId);
-                    if (drawing && drawing.data) {
-                        drawingControls.loadDrawingState(drawing.data);
-                        switchToEffect('pen');
-                        settingsPanel.classList.remove('active');
-                    }
-                });
-            });
-        }
 
         // Initialize drawings from localStorage
         function initializeDrawings() {
