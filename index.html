@@ -250,6 +250,83 @@
         #order-settings {
             display: block;
         }
+
+        .drawing-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1C1C1E;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 350px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .drawing-popup.active {
+            display: block;
+        }
+
+        .drawing-popup input {
+            width: 100%;
+            background: #2C2C2E;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 17px;
+            margin-bottom: 15px;
+        }
+
+        .drawing-popup button {
+            width: 100%;
+            background: #007AFF;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 17px;
+            margin-top: 10px;
+        }
+
+        .drawing-list {
+            margin-top: 20px;
+        }
+
+        .drawing-item {
+            background: #1C1C1E;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .drawing-item-title {
+            font-size: 17px;
+            margin-bottom: 5px;
+        }
+
+        .drawing-item-keyword {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .countdown {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            color: #FFB800;
+            z-index: 2000;
+            display: none;
+        }
+
+        .countdown.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -312,6 +389,16 @@
         <div class="home-indicator"></div>
     </div>
 
+    <!-- Drawing Save Popup -->
+    <div class="drawing-popup" id="drawing-popup">
+        <input type="text" id="drawing-title" placeholder="Drawing Title">
+        <input type="text" id="drawing-keyword" placeholder="Keyword">
+        <button id="save-drawing">Save Drawing</button>
+    </div>
+
+    <!-- Countdown Display -->
+    <div class="countdown" id="countdown"></div>
+
     <!-- Settings Panel -->
     <div class="settings-panel" id="settings-panel">
         <div class="settings-header">
@@ -359,6 +446,16 @@
                 <p style="color: #666; margin-top: 10px;">New features and settings will be available in a future update.</p>
             </div>
         </div>
+
+        <!-- Drawing Effect Settings -->
+        <div class="effect-settings" id="drawing-settings">
+            <div class="settings-group">
+                <div class="settings-label">Saved Drawings</div>
+                <div class="drawing-list" id="drawing-list">
+                    <!-- Drawings will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -375,12 +472,24 @@
 
         let currentEffect = 'order';
 
+        // Add these at the top with other variables
+        let currentDrawingData = null;
+        let drawings = JSON.parse(localStorage.getItem('drawings') || '[]');
+        let isEditingDrawing = false;
+        let editingDrawingId = null;
+        const drawingPopup = document.getElementById('drawing-popup');
+        const drawingTitle = document.getElementById('drawing-title');
+        const drawingKeyword = document.getElementById('drawing-keyword');
+        const saveDrawingBtn = document.getElementById('save-drawing');
+        const countdownDisplay = document.getElementById('countdown');
+
         // Effect switching functions
         function switchToEffect(effect) {
             currentEffect = effect;
             const orderSettings = document.getElementById('order-settings');
             const otherSettings = document.getElementById('other-settings');
             const freewillSettings = document.getElementById('freewill-settings');
+            const drawingSettings = document.getElementById('drawing-settings');
             const undoButton = document.querySelector('.circle-button:first-child');
             const redoButton = document.querySelector('.circle-button:last-child');
             const creationTime = document.querySelector('.creation-time');
@@ -398,24 +507,29 @@
                 orderSettings.style.display = 'block';
                 otherSettings.style.display = 'none';
                 freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'none';
                 undoButton.classList.add('disabled');
                 redoButton.classList.add('disabled');
             } else if (effect === 'pen') {
                 orderSettings.style.display = 'none';
-                otherSettings.style.display = 'block';
+                otherSettings.style.display = 'none';
                 freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'block';
                 undoButton.classList.remove('disabled');
                 redoButton.classList.add('disabled');
+                updateDrawingsList();
             } else if (effect === 'new') {
                 orderSettings.style.display = 'none';
                 otherSettings.style.display = 'none';
                 freewillSettings.style.display = 'block';
+                drawingSettings.style.display = 'none';
                 undoButton.classList.add('disabled');
                 redoButton.classList.add('disabled');
             } else {
                 orderSettings.style.display = 'none';
                 otherSettings.style.display = 'block';
                 freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'none';
                 undoButton.classList.add('disabled');
                 redoButton.classList.add('disabled');
             }
@@ -512,6 +626,21 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
 
+            // Save canvas state
+            function saveDrawingState() {
+                return canvas.toDataURL();
+            }
+
+            // Load canvas state
+            function loadDrawingState(dataUrl) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = dataUrl;
+            }
+
             // Double tap detection for undo button
             undoButton.addEventListener('click', () => {
                 const currentTime = new Date().getTime();
@@ -559,7 +688,194 @@
             canvas.addEventListener('touchstart', startDrawing);
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', () => isDrawing = false);
+
+            // Return functions needed for external use
+            return {
+                clearCanvas,
+                saveDrawingState,
+                loadDrawingState
+            };
         }
+
+        // Initialize drawing controls
+        const drawingControls = initializeDrawing();
+
+        // Save drawing functionality
+        function showDrawingPopup(isEditing = false, drawingId = null) {
+            isEditingDrawing = isEditing;
+            editingDrawingId = drawingId;
+            
+            if (isEditing) {
+                const drawing = drawings.find(d => d.id === drawingId);
+                drawingTitle.value = drawing.title;
+                drawingKeyword.value = drawing.keyword;
+            } else {
+                drawingTitle.value = '';
+                drawingKeyword.value = '';
+            }
+            
+            drawingPopup.classList.add('active');
+            drawingTitle.focus();
+        }
+
+        function hideDrawingPopup() {
+            drawingPopup.classList.remove('active');
+            isEditingDrawing = false;
+            editingDrawingId = null;
+        }
+
+        function saveDrawing() {
+            const title = drawingTitle.value.trim();
+            const keyword = drawingKeyword.value.trim().toLowerCase();
+            
+            if (!title || !keyword) {
+                alert('Please enter both title and keyword');
+                return;
+            }
+
+            const drawingData = drawingControls.saveDrawingState();
+            
+            if (isEditingDrawing) {
+                const index = drawings.findIndex(d => d.id === editingDrawingId);
+                drawings[index] = {
+                    ...drawings[index],
+                    title,
+                    keyword,
+                    data: drawingData,
+                    lastModified: new Date().toISOString()
+                };
+            } else {
+                drawings.push({
+                    id: Date.now().toString(),
+                    title,
+                    keyword,
+                    data: drawingData,
+                    created: new Date().toISOString(),
+                    lastModified: new Date().toISOString()
+                });
+            }
+
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            updateDrawingsList();
+            hideDrawingPopup();
+        }
+
+        function updateDrawingsList() {
+            const drawingList = document.getElementById('drawing-list');
+            drawingList.innerHTML = drawings
+                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+                .map(drawing => `
+                    <div class="drawing-item" data-id="${drawing.id}">
+                        <div class="drawing-item-title">${drawing.title}</div>
+                        <div class="drawing-item-keyword">${drawing.keyword}</div>
+                    </div>
+                `).join('');
+
+            // Add click listeners to drawing items
+            document.querySelectorAll('.drawing-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const drawingId = item.dataset.id;
+                    const drawing = drawings.find(d => d.id === drawingId);
+                    drawingControls.loadDrawingState(drawing.data);
+                    switchToEffect('pen');
+                    settingsPanel.classList.remove('active');
+                });
+            });
+        }
+
+        // Voice activation functionality
+        let countdownTimer;
+        
+        function startCountdown() {
+            let count = 10;
+            countdownDisplay.textContent = count;
+            countdownDisplay.classList.add('active');
+            
+            countdownTimer = setInterval(() => {
+                count--;
+                countdownDisplay.textContent = count;
+                
+                if (count === 0) {
+                    clearInterval(countdownTimer);
+                    countdownDisplay.classList.remove('active');
+                    startVoiceRecognition();
+                }
+            }, 1000);
+        }
+
+        function startVoiceRecognition() {
+            recognition.continuous = true;
+            recognition.start();
+        }
+
+        // Update the mic toggle click handler
+        micToggle.addEventListener('click', () => {
+            if (currentEffect === 'pen') {
+                startCountdown();
+            } else {
+                microphoneActive = false;
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {
+                    // Silently handle any errors when stopping recognition
+                }
+                startMicButton.style.color = '#FFB800';
+                startMicButton.style.borderColor = '#FFB800';
+                startMicButton.disabled = false;
+            }
+        });
+
+        // Update recognition onresult for drawing keywords
+        recognition.onresult = (event) => {
+            const current = event.resultIndex;
+            const transcript = event.results[current][0].transcript.toLowerCase();
+            
+            if (currentEffect === 'pen') {
+                const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
+                if (matchingDrawing) {
+                    drawingControls.loadDrawingState(matchingDrawing.data);
+                    recognition.stop();
+                }
+            } else if (transcript.includes(triggerWord.value.toLowerCase())) {
+                const itemOrder = extractItemOrder(transcript);
+                if (itemOrder.length === 4) {
+                    updateResponseText(itemOrder);
+                    microphoneActive = false;
+                    recognition.stop();
+                }
+            }
+        };
+
+        // Update the start-mic button click handler
+        document.getElementById('start-mic').addEventListener('click', () => {
+            if (currentEffect === 'pen') {
+                currentDrawingData = drawingControls.saveDrawingState();
+                showDrawingPopup();
+            } else if (currentEffect === 'new') {
+                // Reset the Free Will effect
+                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                    <br><br>
+                    Infront of you, you should have 3 items:
+                    <br><br>
+                    A pen<br>
+                    A wallet<br>
+                    A watch
+                    <br><br>
+                    Pick up one and give it to me.`;
+                initializeFreeWill();
+            } else {
+                // Original microphone functionality
+                microphoneActive = true;
+                startMicrophoneAfterDelay();
+                startMicButton.style.color = '#666';
+                startMicButton.style.borderColor = '#666';
+                startMicButton.disabled = true;
+            }
+        });
+
+        // Add save drawing button click handler
+        saveDrawingBtn.addEventListener('click', saveDrawing);
 
         // Free Will functionality
         function initializeFreeWill() {
@@ -644,30 +960,6 @@
             setTimeout(() => {
                 saveButton.textContent = 'Save Changes';
             }, 2000);
-        });
-
-        // Reset functionality for 3-dot button
-        document.getElementById('start-mic').addEventListener('click', () => {
-            if (currentEffect === 'new') {
-                // Reset the Free Will effect
-                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
-                    <br><br>
-                    Infront of you, you should have 3 items:
-                    <br><br>
-                    A pen<br>
-                    A wallet<br>
-                    A watch
-                    <br><br>
-                    Pick up one and give it to me.`;
-                initializeFreeWill();
-            } else {
-                // Original microphone functionality
-                microphoneActive = true;
-                startMicrophoneAfterDelay();
-                startMicButton.style.color = '#666';
-                startMicButton.style.borderColor = '#666';
-                startMicButton.disabled = true;
-            }
         });
 
         // Button event listeners
