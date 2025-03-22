@@ -996,8 +996,13 @@
         }
 
         function startVoiceRecognition() {
-            recognition.continuous = true;
-            recognition.start();
+            try {
+                recognition.start();
+            } catch (err) {
+                console.log('Error starting recognition:', err);
+                microphoneActive = false;
+                countdownDisplay.classList.remove('active');
+            }
         }
 
         // Speech Recognition Setup
@@ -1012,7 +1017,7 @@
         try {
             recognition = new SpeechRecognition();
             recognition.continuous = true;
-            recognition.interimResults = true;
+            recognition.interimResults = false;
 
             // Speech recognition event handling
             recognition.onresult = (event) => {
@@ -1020,10 +1025,24 @@
                 const transcript = event.results[current][0].transcript.toLowerCase();
                 
                 if (currentEffect === 'pen') {
+                    // Check if any drawing keyword is mentioned in the transcript
                     const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
                     if (matchingDrawing) {
-                        drawingControls.loadDrawingState(matchingDrawing.data);
+                        // Stop the recognition
                         recognition.stop();
+                        microphoneActive = false;
+                        countdownDisplay.classList.remove('active');
+                        
+                        // Load the drawing
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            // Reset drawing history after loading
+                            drawingHistory = [canvas.toDataURL()];
+                            currentHistoryIndex = 0;
+                        };
+                        img.src = matchingDrawing.data;
                     }
                 } else if (transcript.includes(triggerWord.value.toLowerCase())) {
                     const itemOrder = extractItemOrder(transcript);
@@ -1043,6 +1062,14 @@
                     } catch (err) {
                         // Silently handle any errors when restarting recognition
                     }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.log('Speech recognition error:', event.error);
+                if (event.error === 'not-allowed') {
+                    microphoneActive = false;
+                    countdownDisplay.classList.remove('active');
                 }
             };
         } catch (err) {
@@ -1069,6 +1096,7 @@
         // Mic Toggle Functionality
         micToggle.addEventListener('click', () => {
             if (currentEffect === 'pen') {
+                microphoneActive = true;
                 startCountdown();
             } else {
                 microphoneActive = false;
