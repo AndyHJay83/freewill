@@ -128,163 +128,18 @@
             height: 120px;
             background-color: #1C1C1E;
             border-top: 1px solid #38383A;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
+            padding: 0;
             position: relative;
             z-index: 2;
-        }
-
-        .drawing-tools {
-            display: flex;
-            gap: 25px;
-            align-items: flex-end;
-            justify-content: center;
-            height: 60px;
-        }
-
-        .tool {
-            width: 30px;
-            height: 60px;
-            background: none;
-            border: none;
-            padding: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            position: relative;
         }
 
-        .tool::after {
-            content: "";
-            width: 4px;
-            height: 4px;
-            background-color: #666;
-            border-radius: 50%;
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .tool.active::after {
-            background-color: #007AFF;
-        }
-
-        .pen-tool {
+        .toolbar-image {
             width: 100%;
             height: 100%;
-            position: relative;
-        }
-
-        .pen-white {
-            width: 3px;
-            height: 12px;
-            background: white;
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .pen-marker {
-            width: 6px;
-            height: 14px;
-            background: #FFD700;
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .pen-tip {
-            width: 12px;
-            height: 30px;
-            background: #333;
-            position: absolute;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 2px;
-        }
-
-        .pen-tip.marker {
-            background: #333;
-            border-top: 2px solid #FFD700;
-        }
-
-        .pen-tip.highlighter {
-            background: #333;
-            border-top: 6px solid #FFC0CB;
-        }
-
-        .pen-tip.pencil {
-            background: #333;
-            border-top: 2px solid white;
-        }
-
-        .pen-tip.blue {
-            background: #333;
-            border-top: 2px solid #007AFF;
-        }
-
-        .color-picker {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #FF0000, #00FF00, #0000FF);
-            border: 2px solid white;
-            margin-bottom: 12px;
-        }
-
-        .add-button {
-            width: 32px;
-            height: 32px;
-            background: #333;
-            border: none;
-            color: #007AFF;
-            font-size: 24px;
-            border-radius: 50%;
-            position: absolute;
-            right: 15px;
-            bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .size-indicator {
-            position: absolute;
-            bottom: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #666;
-            font-size: 10px;
-        }
-
-        .ruler-tool {
-            width: 20px;
-            height: 40px;
-            background: #333;
-            position: relative;
-            margin-bottom: 12px;
-        }
-
-        .ruler-marks {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-        }
-
-        .ruler-mark {
-            width: 8px;
-            height: 1px;
-            background: #666;
+            object-fit: cover;
+            pointer-events: none;
         }
 
         .home-indicator {
@@ -293,6 +148,22 @@
             background: #808080;
             border-radius: 100px;
             margin: 8px auto;
+        }
+
+        /* Remove all the old toolbar styles */
+        .drawing-tools,
+        .tool,
+        .pen-tool,
+        .pen-white,
+        .pen-marker,
+        .pen-tip,
+        .color-picker,
+        .add-button,
+        .size-indicator,
+        .ruler-tool,
+        .ruler-marks,
+        .ruler-mark {
+            display: none;
         }
     </style>
 </head>
@@ -323,57 +194,7 @@
         </div>
 
         <div class="toolbar">
-            <div class="drawing-tools">
-                <button class="tool active">
-                    <div class="pen-tool">
-                        <div class="pen-tip pencil"></div>
-                        <div class="pen-white"></div>
-                        <span class="size-indicator">50</span>
-                    </div>
-                </button>
-                <button class="tool">
-                    <div class="pen-tool">
-                        <div class="pen-tip"></div>
-                        <div class="pen-white"></div>
-                    </div>
-                </button>
-                <button class="tool">
-                    <div class="pen-tool">
-                        <div class="pen-tip marker"></div>
-                        <div class="pen-marker"></div>
-                        <span class="size-indicator">80</span>
-                    </div>
-                </button>
-                <button class="tool">
-                    <div class="pen-tool">
-                        <div class="pen-tip highlighter"></div>
-                    </div>
-                </button>
-                <button class="tool">
-                    <div class="pen-tool">
-                        <div class="pen-tip" style="background: #444; transform: rotate(45deg) translateX(-50%); transform-origin: center;"></div>
-                    </div>
-                </button>
-                <button class="tool">
-                    <div class="ruler-tool">
-                        <div class="ruler-marks">
-                            <div class="ruler-mark"></div>
-                            <div class="ruler-mark"></div>
-                            <div class="ruler-mark"></div>
-                            <div class="ruler-mark"></div>
-                        </div>
-                    </div>
-                </button>
-                <button class="tool">
-                    <div class="pen-tool">
-                        <div class="pen-tip blue"></div>
-                        <div class="pen-white"></div>
-                        <span class="size-indicator">50</span>
-                    </div>
-                </button>
-                <button class="color-picker"></button>
-            </div>
-            <button class="add-button">+</button>
+            <img src="toolbar.png" alt="Drawing Tools" class="toolbar-image">
         </div>
         <div class="home-indicator"></div>
     </div>
