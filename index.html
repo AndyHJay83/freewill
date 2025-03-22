@@ -557,7 +557,7 @@
                 id: 'default-1',
                 title: 'Cross',
                 keyword: 'towards',
-                data: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAA7AAAAOwBeShxvQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAABYSURBVFiF7dexDcAgDETRI2YIs7B6RkiPxR0SNApKFEj3JLfG1r8yM0uSTmADVkl7RLQnZgF24AAGYLwx7wc8LpgXfL0v6Vc8gqQRWCLiTNb3K5LaEwMAF5E6J6heCQ4RAAAAAElFTkSuQmCC',
+                data: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAABYgAAAWIBXyfQUwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAE5SURBVFiF7ZexTsMwEIa/K1NgrWCsxMzKG/B4PEhfA4mFhQfgBRArEkMlNiCUNj0GJyhR0qS+s9OB/pKlxP7vv/PZvoiZ8Z9jVVbQzO4BATZADHyZ2YeZ7c0sxd0Tdy/dvHv3FEi8GGY2ds9DxzwEhsCZmR0DL8AncJ0kSZem6Wa73XaDIPgGTovuuQdugA3QizG+9vv9+/FwOCwEXwHP7h4Bj0AEXJRdMrMz4AV4d/fx6uLispPL5RJ3B1gDPaCfZwPAzC6BNfBmZoPpdNrNsmwvhHCTy40A3J0QwrOZPQGjPJtSuPsQeHP3UZIkO2BX1L4qB0Zl4LXxcPe8GFgBz+4e1wEH6LTQ5gp4MLNxHfBGcPfE3R+rgNeBf1fkvwt/FbgZRDMLwC1w5O7DOuDHwAXQbQKe5/MNxj4Xv1OZnpYAAAAASUVORK5CYII=',
                 created: '2024-03-22T11:35:00.000Z',
                 lastModified: '2024-03-22T11:35:00.000Z'
             }
@@ -1384,9 +1384,11 @@
                 switchToEffect('pen');
             }
             
-            // Ensure canvas is visible
+            // Ensure canvas is visible and properly sized
             drawingCanvas.style.display = 'block';
             textOverlay.style.display = 'none';
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
             
             // Load the drawing
             const img = new Image();
@@ -1398,21 +1400,8 @@
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.lineWidth = 3;
                 
-                // Calculate dimensions to maintain aspect ratio
-                const scale = Math.min(
-                    canvas.width / img.width,
-                    canvas.height / img.height
-                );
-                const x = (canvas.width - img.width * scale) / 2;
-                const y = (canvas.height - img.height * scale) / 2;
-                
-                // Draw the image centered and scaled
-                ctx.drawImage(
-                    img,
-                    x, y,
-                    img.width * scale,
-                    img.height * scale
-                );
+                // Draw the image at full size
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
                 // Save this state in drawing history
                 drawingHistory = [canvas.toDataURL()];
