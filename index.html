@@ -1540,11 +1540,24 @@
         });
 
         // Effect Button Listeners
-        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
-        document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
-        document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
-        document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
-        document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
+        const effectButtons = {
+            'checklist-btn': 'order',
+            'new-btn': 'new',
+            'paperclip-btn': 'paperclip',
+            'pen-btn': 'pen',
+            'writing-btn': 'writing'
+        };
+
+        // Remove any existing listeners and add new ones
+        Object.entries(effectButtons).forEach(([buttonId, effect]) => {
+            const button = document.getElementById(buttonId);
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            newButton.addEventListener('click', () => {
+                console.log('Switching to effect:', effect); // Debug log
+                switchToEffect(effect);
+            });
+        });
 
         // Settings Input Listeners
         micDelay.addEventListener('change', () => {
@@ -1725,6 +1738,7 @@
 
         // Effect switching functions
         function switchToEffect(effect) {
+            console.log('switchToEffect called with:', effect); // Debug log
             currentEffect = effect;
             
             // Hide all settings panels first
@@ -1748,11 +1762,38 @@
             // Reset numpad and filtered words containers
             const numpadContainer = document.getElementById('numpad-container');
             const filteredWordsContainer = document.getElementById('filtered-words');
+            
             if (numpadContainer) numpadContainer.style.display = 'none';
             if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
 
             // Effect-specific changes
             switch(effect) {
+                case 'writing':
+                    console.log('Setting up writing effect'); // Debug log
+                    document.getElementById('other-settings').style.display = 'block';
+                    notesTitle.textContent = 'Word Filter';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
+                    
+                    // Show numpad
+                    if (numpadContainer) {
+                        currentCode = '';
+                        const numpadDisplay = document.getElementById('numpad-display');
+                        if (numpadDisplay) numpadDisplay.textContent = '';
+                        numpadContainer.style.display = 'block';
+                        
+                        // Load word list
+                        fetch('data/Long_Nouns.txt')
+                            .then(response => response.text())
+                            .then(text => {
+                                window.wordList = text.split('\n')
+                                    .map(word => word.trim())
+                                    .filter(word => word.length > 0);
+                                console.log('Word list loaded:', window.wordList.length, 'words'); // Debug log
+                            })
+                            .catch(error => console.error('Error loading word list:', error));
+                    }
+                    break;
+                    
                 case 'order':
                     document.getElementById('order-settings').style.display = 'block';
                     notesTitle.textContent = 'Items';
@@ -1797,32 +1838,6 @@
                     drawingCanvas.style.display = 'block';
                     initializeDrawing();
                     undoButton.classList.remove('disabled');
-                    break;
-                    
-                case 'writing':
-                    document.getElementById('other-settings').style.display = 'block';
-                    notesTitle.textContent = 'Word Filter';
-                    textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
-                    textOverlay.style.display = 'block';
-                    drawingCanvas.style.display = 'none';
-                    
-                    // Show numpad
-                    const numpad = document.getElementById('numpad-container');
-                    if (numpad) {
-                        currentCode = '';
-                        document.getElementById('numpad-display').textContent = '';
-                        numpad.style.display = 'block';
-                        
-                        // Load word list
-                        fetch('data/Long_Nouns.txt')
-                            .then(response => response.text())
-                            .then(text => {
-                                window.wordList = text.split('\n')
-                                    .map(word => word.trim())
-                                    .filter(word => word.length > 0);
-                            })
-                            .catch(error => console.error('Error loading word list:', error));
-                    }
                     break;
                     
                 default:
