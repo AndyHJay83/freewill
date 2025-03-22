@@ -271,10 +271,11 @@
                 </div>
             </div>
             <div class="creation-time">22 March 2025 at 11:35</div>
-            <h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
         </div>
 
         <div id="text-overlay" contenteditable="true" spellcheck="true">
+            <h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
+            <br><br>
             Infront of you are 4 items:
             <br><br>
             A phone<br>
@@ -380,6 +381,7 @@
             const undoButton = document.querySelector('.circle-button:first-child');
             const redoButton = document.querySelector('.circle-button:last-child');
             const creationTime = document.querySelector('.creation-time');
+            const notesTitle = document.querySelector('.notes-title');
 
             // Set static creation time
             creationTime.textContent = '22 March 2025 at 11:35';
@@ -419,7 +421,9 @@
             switch(effect) {
                 case 'order':
                     notesTitle.textContent = 'Items';
-                    textOverlay.innerHTML = `Infront of you are 4 items:
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
+                        <br><br>
+                        Infront of you are 4 items:
                         <br><br>
                         A phone<br>
                         A watch<br>
@@ -431,7 +435,9 @@
                     break;
                 case 'new':
                     notesTitle.textContent = 'Free Will';
-                    textOverlay.innerHTML = `Infront of you, you should have 3 items:
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                        <br><br>
+                        Infront of you, you should have 3 items:
                         <br><br>
                         A pen<br>
                         A wallet<br>
@@ -442,17 +448,18 @@
                     break;
                 case 'paperclip':
                     notesTitle.textContent = 'Billet?';
-                    textOverlay.innerHTML = '';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Billet?</h1>`;
                     break;
                 case 'pen':
                     notesTitle.textContent = 'Drawing';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Drawing</h1>`;
                     textOverlay.style.display = 'none';
                     drawingCanvas.style.display = 'block';
                     initializeDrawing();
                     break;
                 case 'writing':
                     notesTitle.textContent = 'Empty';
-                    textOverlay.innerHTML = '';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Empty</h1>`;
                     break;
             }
         }
@@ -640,7 +647,9 @@
         document.getElementById('start-mic').addEventListener('click', () => {
             if (currentEffect === 'new') {
                 // Reset the Free Will effect
-                textOverlay.innerHTML = `Infront of you, you should have 3 items:
+                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                    <br><br>
+                    Infront of you, you should have 3 items:
                     <br><br>
                     A pen<br>
                     A wallet<br>
