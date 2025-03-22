@@ -406,6 +406,69 @@
         .drawing-popup input {
             margin-bottom: 10px;
         }
+
+        /* Numpad Styles */
+        .numpad-container {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1C1C1E;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .numpad-display {
+            width: 100%;
+            height: 50px;
+            background: #2C2C2E;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            letter-spacing: 8px;
+        }
+
+        .numpad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .numpad-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: #2C2C2E;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .numpad-button:active {
+            background: #3C3C3E;
+        }
+
+        .filtered-words {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            width: 80%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -551,6 +614,27 @@
 
     <!-- Add a hidden input for dictation -->
     <input type="text" id="dictation-input" style="position: absolute; top: -9999px; left: -9999px; color: black; background: black; caret-color: transparent;">
+
+    <!-- Add numpad HTML -->
+    <div id="numpad-container" class="numpad-container">
+        <div class="numpad-display" id="numpad-display"></div>
+        <div class="numpad-grid">
+            <button class="numpad-button">1</button>
+            <button class="numpad-button">2</button>
+            <button class="numpad-button">3</button>
+            <button class="numpad-button">4</button>
+            <button class="numpad-button">5</button>
+            <button class="numpad-button">6</button>
+            <button class="numpad-button">7</button>
+            <button class="numpad-button">8</button>
+            <button class="numpad-button">9</button>
+            <button class="numpad-button" style="visibility: hidden"></button>
+            <button class="numpad-button">0</button>
+            <button class="numpad-button" style="visibility: hidden"></button>
+        </div>
+    </div>
+
+    <div id="filtered-words" class="filtered-words"></div>
 
     <script>
         // Settings Panel Functionality
@@ -1725,8 +1809,19 @@
                     initializeDrawing();
                     break;
                 case 'writing':
-                    notesTitle.textContent = 'Empty';
-                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Empty</h1>`;
+                    notesTitle.textContent = 'Word Filter';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Enter 4-digit code</h1>`;
+                    currentCode = '';
+                    numpadDisplay.textContent = '';
+                    numpadContainer.style.display = 'block';
+                    filteredWordsContainer.style.display = 'none';
+                    // Load word list when switching to writing effect
+                    fetch('data/Long_Nouns.txt')
+                        .then(response => response.text())
+                        .then(text => {
+                            window.wordList = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
+                        })
+                        .catch(error => console.error('Error loading word list:', error));
                     break;
             }
         }
@@ -1821,6 +1916,108 @@
             event.target.style.left = '-9999px';
             event.target.value = '';
         });
+
+        // Letter shape categories
+        const letterShapes = {
+            straight: ['A', 'E', 'F', 'H', 'I', 'K', 'L', 'M', 'N', 'T', 'V', 'W', 'X', 'Y', 'Z'],
+            mixed: ['B', 'D', 'G', 'J', 'P', 'Q', 'R', 'U', 'W', 'Y'],
+            curved: ['C', 'G', 'J', 'O', 'Q', 'S', 'U', 'W']
+        };
+
+        // Initialize numpad functionality
+        let currentCode = '';
+        const numpadDisplay = document.getElementById('numpad-display');
+        const numpadContainer = document.getElementById('numpad-container');
+        const filteredWordsContainer = document.getElementById('filtered-words');
+
+        // Add click handlers to numpad buttons
+        document.querySelectorAll('.numpad-button').forEach(button => {
+            button.addEventListener('click', () => {
+                if (currentCode.length < 4 && button.textContent) {
+                    currentCode += button.textContent;
+                    numpadDisplay.textContent = currentCode;
+
+                    if (currentCode.length === 4) {
+                        // Hide numpad and filter words
+                        setTimeout(() => {
+                            numpadContainer.style.display = 'none';
+                            filterWords(currentCode);
+                        }, 500);
+                    }
+                }
+            });
+        });
+
+        // Function to determine letter shape
+        function getLetterShape(letter) {
+            const straight = ['A', 'E', 'F', 'H', 'I', 'K', 'L', 'M', 'N', 'T', 'V', 'W', 'X', 'Y', 'Z'];
+            const mixed = ['B', 'D', 'G', 'J', 'P', 'Q', 'R', 'U', 'W', 'Y'];
+            const curved = ['C', 'G', 'J', 'O', 'Q', 'S', 'U', 'W'];
+            
+            letter = letter.toUpperCase();
+            if (straight.includes(letter)) return 1;
+            if (mixed.includes(letter)) return 2;
+            if (curved.includes(letter)) return 3;
+            return 0; // Default case
+        }
+
+        // Function to find vowel positions
+        function getVowelPositions(word) {
+            const vowels = ['A', 'E', 'I', 'O', 'U'];
+            const positions = [];
+            for (let i = 0; i < word.length; i++) {
+                if (vowels.includes(word[i].toUpperCase())) {
+                    positions.push(i + 1); // 1-based position
+                }
+            }
+            return positions;
+        }
+
+        // Function to filter words based on code
+        function filterWords(code) {
+            if (!window.wordList) {
+                console.error('Word list not loaded');
+                return;
+            }
+
+            const length = parseInt(code[0]);
+            const firstVowelPos = parseInt(code[1]);
+            const secondVowelPos = parseInt(code[2]);
+            const firstLetterShape = parseInt(code[3]);
+
+            const filteredWords = window.wordList.filter(word => {
+                // Check word length
+                if (word.length !== length) return false;
+
+                // Get vowel positions
+                const vowelPositions = getVowelPositions(word);
+                
+                // Check first vowel position
+                if (vowelPositions[0] !== firstVowelPos) return false;
+
+                // Check second vowel position
+                if (vowelPositions[1] !== secondVowelPos) return false;
+
+                // Check first letter shape
+                const shape = getLetterShape(word[0]);
+                if (shape !== firstLetterShape) return false;
+
+                return true;
+            });
+
+            // Display filtered words
+            const filteredWordsContainer = document.getElementById('filtered-words');
+            if (filteredWords.length === 0) {
+                filteredWordsContainer.innerHTML = '<p>No words found matching the criteria.</p>';
+            } else {
+                filteredWordsContainer.innerHTML = `
+                    <p>Found ${filteredWords.length} matching words:</p>
+                    <div class="word-list">
+                        ${filteredWords.map(word => `<span class="word">${word}</span>`).join(' ')}
+                    </div>
+                `;
+            }
+        }
     </script>
 </body>
 </html>

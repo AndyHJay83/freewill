@@ -1,0 +1,154 @@
+.word-pattern-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.input-display {
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 5px;
+    min-height: 60px;
+}
+
+.numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.numpad button {
+    padding: 20px;
+    font-size: 24px;
+    border: none;
+    border-radius: 8px;
+    background-color: #e9ecef;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.numpad button:hover {
+    background-color: #dee2e6;
+}
+
+.numpad button:active {
+    background-color: #ced4da;
+}
+
+.control-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.control-buttons button {
+    padding: 15px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clear-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.clear-btn:hover {
+    background-color: #c82333;
+}
+
+.submit-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.submit-btn:hover {
+    background-color: #218838;
+}
+
+.submit-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.results {
+    margin-top: 20px;
+}
+
+.results h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.word-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.word-item {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.word-item:hover {
+    background-color: #e9ecef;
+}
+
+.restart-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.restart-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Billet Effect Styles */
+.billet-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.billet-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.1) 50%, transparent 55%);
+    animation: billet 3s infinite;
+}
+
+@keyframes billet {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+} 
