@@ -808,7 +808,73 @@
             recognition.start();
         }
 
-        // Update the mic toggle click handler
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let micStartTimeout;
+        let microphoneActive = false;
+        const startMicButton = document.getElementById('start-mic');
+        const micToggle = document.getElementById('mic-toggle');
+
+        // Initialize Speech Recognition if available
+        try {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            // Speech recognition event handling
+            recognition.onresult = (event) => {
+                const current = event.resultIndex;
+                const transcript = event.results[current][0].transcript.toLowerCase();
+                
+                if (currentEffect === 'pen') {
+                    const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
+                    if (matchingDrawing) {
+                        drawingControls.loadDrawingState(matchingDrawing.data);
+                        recognition.stop();
+                    }
+                } else if (transcript.includes(triggerWord.value.toLowerCase())) {
+                    const itemOrder = extractItemOrder(transcript);
+                    if (itemOrder.length === 4) {
+                        updateResponseText(itemOrder);
+                        microphoneActive = false;
+                        recognition.stop();
+                    }
+                }
+            };
+
+            recognition.onend = () => {
+                // Only restart if still active and in the correct mode
+                if (microphoneActive) {
+                    try {
+                        recognition.start();
+                    } catch (err) {
+                        // Silently handle any errors when restarting recognition
+                    }
+                }
+            };
+        } catch (err) {
+            console.log('Speech Recognition not available');
+        }
+
+        // Store the original items
+        const items = {
+            'phone': 'a phone',
+            'watch': 'a watch',
+            'airpods': 'Airpods',
+            'wallet': 'a wallet'
+        };
+
+        // Settings Panel Functionality
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.classList.add('active');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsPanel.classList.remove('active');
+        });
+
+        // Mic Toggle Functionality
         micToggle.addEventListener('click', () => {
             if (currentEffect === 'pen') {
                 startCountdown();
@@ -826,29 +892,8 @@
             }
         });
 
-        // Update recognition onresult for drawing keywords
-        recognition.onresult = (event) => {
-            const current = event.resultIndex;
-            const transcript = event.results[current][0].transcript.toLowerCase();
-            
-            if (currentEffect === 'pen') {
-                const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
-                if (matchingDrawing) {
-                    drawingControls.loadDrawingState(matchingDrawing.data);
-                    recognition.stop();
-                }
-            } else if (transcript.includes(triggerWord.value.toLowerCase())) {
-                const itemOrder = extractItemOrder(transcript);
-                if (itemOrder.length === 4) {
-                    updateResponseText(itemOrder);
-                    microphoneActive = false;
-                    recognition.stop();
-                }
-            }
-        };
-
-        // Update the start-mic button click handler
-        document.getElementById('start-mic').addEventListener('click', () => {
+        // Start Mic Button Functionality
+        startMicButton.addEventListener('click', () => {
             if (currentEffect === 'pen') {
                 currentDrawingData = drawingControls.saveDrawingState();
                 showDrawingPopup();
@@ -874,8 +919,55 @@
             }
         });
 
-        // Add save drawing button click handler
-        saveDrawingBtn.addEventListener('click', saveDrawing);
+        // Effect Button Listeners
+        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
+        document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
+        document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
+        document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
+        document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
+
+        // Settings Input Listeners
+        micDelay.addEventListener('change', () => {
+            if (microphoneActive) {
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {}
+                startMicrophoneAfterDelay();
+            }
+        });
+
+        triggerWord.addEventListener('change', () => {
+            if (microphoneActive) {
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {}
+                startMicrophoneAfterDelay();
+            }
+        });
+
+        function startMicrophoneAfterDelay() {
+            if (!microphoneActive) return;
+            
+            const delay = parseInt(micDelay.value) * 1000;
+            micStartTimeout = setTimeout(() => {
+                if (!microphoneActive) {
+                    startMicButton.style.color = '#FFB800';
+                    startMicButton.style.borderColor = '#FFB800';
+                    startMicButton.disabled = false;
+                    return;
+                }
+                try {
+                    recognition.start();
+                } catch (err) {
+                    // Silently handle any errors when starting recognition
+                }
+            }, delay);
+        }
+
+        // Initialize with Order effect
+        switchToEffect('order');
 
         // Free Will functionality
         function initializeFreeWill() {
@@ -962,98 +1054,6 @@
             }, 2000);
         });
 
-        // Button event listeners
-        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
-        document.getElementById('new-btn').addEventListener('click', () => switchToEffect('new'));
-        document.getElementById('paperclip-btn').addEventListener('click', () => switchToEffect('paperclip'));
-        document.getElementById('pen-btn').addEventListener('click', () => switchToEffect('pen'));
-        document.getElementById('writing-btn').addEventListener('click', () => switchToEffect('writing'));
-
-        // Existing event listeners
-        settingsButton.addEventListener('click', () => {
-            settingsPanel.classList.add('active');
-        });
-
-        closeSettings.addEventListener('click', () => {
-            settingsPanel.classList.remove('active');
-        });
-
-        // Initialize with Order effect
-        switchToEffect('order');
-
-        // Speech Recognition Setup
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        // Store the original items
-        const items = {
-            'phone': 'a phone',
-            'watch': 'a watch',
-            'airpods': 'Airpods',
-            'wallet': 'a wallet'
-        };
-
-        let micStartTimeout;
-        let microphoneActive = true;
-
-        const micToggle = document.getElementById('mic-toggle');
-        micToggle.addEventListener('click', () => {
-            microphoneActive = false;
-            clearTimeout(micStartTimeout);
-            try {
-                recognition.stop();
-            } catch (err) {
-                // Silently handle any errors when stopping recognition
-            }
-            // Reset the start button
-            startMicButton.style.color = '#FFB800';
-            startMicButton.style.borderColor = '#FFB800';
-            startMicButton.disabled = false;
-        });
-
-        function startMicrophoneAfterDelay() {
-            if (!microphoneActive) return;
-            
-            const delay = parseInt(micDelay.value) * 1000;
-            micStartTimeout = setTimeout(() => {
-                if (!microphoneActive) {
-                    // Reset the start button if microphone was deactivated during delay
-                    startMicButton.style.color = '#FFB800';
-                    startMicButton.style.borderColor = '#FFB800';
-                    startMicButton.disabled = false;
-                    return;
-                }
-                try {
-                    recognition.start();
-                } catch (err) {
-                    // Silently handle any errors when starting recognition
-                }
-            }, delay);
-        }
-
-        // Initialize microphone timer when page loads
-        document.addEventListener("DOMContentLoaded", () => {
-            try {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('portrait');
-                }
-            } catch (error) {
-                // Silently handle the error if locking orientation fails
-            }
-        });
-
-        // Add start button functionality
-        const startMicButton = document.getElementById('start-mic');
-        startMicButton.addEventListener('click', () => {
-            microphoneActive = true;
-            startMicrophoneAfterDelay();
-            startMicButton.style.color = '#666';
-            startMicButton.style.borderColor = '#666';
-            startMicButton.disabled = true;
-        });
-
         // Function to extract item order from speech
         function extractItemOrder(transcript) {
             const lowerTranscript = transcript.toLowerCase();
@@ -1091,51 +1091,6 @@
             // Update the hidden paragraph with many line breaks before it
             textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.' + '<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>' + response;
         }
-
-        // Speech recognition event handling
-        let transcript = '';
-
-        recognition.onresult = (event) => {
-            const current = event.resultIndex;
-            transcript = event.results[current][0].transcript.toLowerCase();
-            
-            if (transcript.includes(triggerWord.value.toLowerCase())) {
-                const itemOrder = extractItemOrder(transcript);
-                if (itemOrder.length === 4) {
-                    updateResponseText(itemOrder);
-                    microphoneActive = false;
-                    try {
-                        recognition.stop();
-                    } catch (err) {
-                        // Silently handle any errors when stopping recognition
-                    }
-                }
-            }
-        };
-
-        recognition.onend = () => {
-            // Only restart if still active and haven't found trigger word
-            if (microphoneActive && !transcript.includes(triggerWord.value.toLowerCase())) {
-                try {
-                    recognition.start();
-                } catch (err) {
-                    // Silently handle any errors when restarting recognition
-                }
-            }
-        };
-
-        // Reset microphone timer when settings change
-        micDelay.addEventListener('change', () => {
-            clearTimeout(micStartTimeout);
-            recognition.stop();
-            startMicrophoneAfterDelay();
-        });
-
-        triggerWord.addEventListener('change', () => {
-            clearTimeout(micStartTimeout);
-            recognition.stop();
-            startMicrophoneAfterDelay();
-        });
     </script>
 </body>
 </html>
