@@ -631,22 +631,16 @@
                 if (!selectedItems.includes(item)) {
                     selectedItems.push(item);
                     scrollCount++;
-
                     let newText = '';
                     if (scrollCount === 1) {
                         newText = '<br>'.repeat(50) + firstMessage;
                         textOverlay.innerHTML += newText;
                     } else if (scrollCount === 2) {
-                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         newText = '<br>'.repeat(50) + secondMessage;
                         textOverlay.innerHTML += newText;
-
-                        // Add loading message
-                        const loadingText = '<br>'.repeat(50) + 'Generating prediction...';
-                        textOverlay.innerHTML += loadingText;
-
-                        // Generate AI message
-                        generateAIMessage(selectedItems[0], selectedItems[1], unscrolledItem)
+                        
+                        // Generate AI message after second swipe
+                        generateAIMessage(selectedItems[0], selectedItems[1], selectedItems[2])
                             .then(aiMessage => {
                                 // Replace loading message with AI response
                                 textOverlay.innerHTML = textOverlay.innerHTML.replace('Generating prediction...', aiMessage);
