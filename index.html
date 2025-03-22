@@ -352,8 +352,11 @@
         micToggle.addEventListener('click', () => {
             microphoneActive = false;
             clearTimeout(micStartTimeout);
-            recognition.stop();
-            console.log('Microphone deactivated');
+            try {
+                recognition.stop();
+            } catch (err) {
+                // Silently handle any errors when stopping recognition
+            }
         });
 
         function startMicrophoneAfterDelay() {
@@ -361,13 +364,11 @@
             
             const delay = parseInt(micDelay.value) * 1000;
             micStartTimeout = setTimeout(() => {
+                if (!microphoneActive) return;
                 try {
-                    if (microphoneActive) {
-                        recognition.start();
-                        console.log('Microphone activated');
-                    }
+                    recognition.start();
                 } catch (err) {
-                    console.error('Speech recognition error:', err);
+                    // Silently handle any errors when starting recognition
                 }
             }, delay);
         }
@@ -434,18 +435,23 @@
                 const itemOrder = extractItemOrder(transcript);
                 if (itemOrder.length === 4) {
                     updateResponseText(itemOrder);
-                    recognition.stop();
+                    microphoneActive = false;
+                    try {
+                        recognition.stop();
+                    } catch (err) {
+                        // Silently handle any errors when stopping recognition
+                    }
                 }
             }
         };
 
         recognition.onend = () => {
-            // Restart recognition if it ends and we haven't found the trigger word
-            if (!transcript.includes(triggerWord.value.toLowerCase())) {
+            // Only restart if still active and haven't found trigger word
+            if (microphoneActive && !transcript.includes(triggerWord.value.toLowerCase())) {
                 try {
                     recognition.start();
                 } catch (err) {
-                    console.error('Error restarting speech recognition:', err);
+                    // Silently handle any errors when restarting recognition
                 }
             }
         };
