@@ -557,7 +557,7 @@
                 id: 'default-1',
                 title: 'Cross',
                 keyword: 'towards',
-                data: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAABYgAAAWIBXyfQUwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAE5SURBVFiF7ZexTsMwEIa/K1NgrWCsxMzKG/B4PEhfA4mFhQfgBRArEkMlNiCUNj0GJyhR0qS+s9OB/pKlxP7vv/PZvoiZ8Z9jVVbQzO4BATZADHyZ2YeZ7c0sxd0Tdy/dvHv3FEi8GGY2ds9DxzwEhsCZmR0DL8AncJ0kSZem6Wa73XaDIPgGTovuuQdugA3QizG+9vv9+/FwOCwEXwHP7h4Bj0AEXJRdMrMz4AV4d/fx6uLispPL5RJ3B1gDPaCfZwPAzC6BNfBmZoPpdNrNsmwvhHCTy40A3J0QwrOZPQGjPJtSuPsQeHP3UZIkO2BX1L4qB0Zl4LXxcPe8GFgBz+4e1wEH6LTQ5gp4MLNxHfBGcPfE3R+rgNeBf1fkvwt/FbgZRDMLwC1w5O7DOuDHwAXQbQKe5/MNxj4Xv1OZnpYAAAAASUVORK5CYII=',
+                imagePath: './images/drawings/cross.png',
                 created: '2024-03-22T11:35:00.000Z',
                 lastModified: '2024-03-22T11:35:00.000Z'
             }
@@ -628,8 +628,8 @@
                 item.addEventListener('click', () => {
                     const drawingId = item.dataset.id;
                     const drawing = drawings.find(d => d.id === drawingId);
-                    if (drawing && drawing.data) {
-                        loadDrawing(drawing.data);
+                    if (drawing && drawing.imagePath) {
+                        loadDrawing(drawing.imagePath);
                         settingsPanel.classList.remove('active');
                     }
                 });
@@ -970,33 +970,8 @@
                         microphoneActive = false;
                         countdownDisplay.classList.remove('active');
                         
-                        // Switch to pen effect if not already there
-                        if (currentEffect !== 'pen') {
-                            switchToEffect('pen');
-                        }
-                        
-                        // Ensure canvas is visible
-                        drawingCanvas.style.display = 'block';
-                        textOverlay.style.display = 'none';
-                        
                         // Load the drawing
-                        const img = new Image();
-                        img.onload = function() {
-                            // Clear the canvas
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            
-                            // Set white stroke style for visibility
-                            ctx.strokeStyle = '#FFFFFF';
-                            ctx.lineWidth = 3;
-                            
-                            // Draw the image at full size
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            
-                            // Save this state in drawing history
-                            drawingHistory = [canvas.toDataURL()];
-                            currentHistoryIndex = 0;
-                        };
-                        img.src = matchingDrawing.data;
+                        loadDrawing(matchingDrawing.imagePath);
                     }
                 } else if (transcript.includes(triggerWord.value.toLowerCase())) {
                     const itemOrder = extractItemOrder(transcript);
@@ -1378,7 +1353,7 @@
         }
 
         // Function to load a drawing onto the canvas
-        function loadDrawing(drawingData) {
+        function loadDrawing(imagePath) {
             // Switch to pen effect if not already there
             if (currentEffect !== 'pen') {
                 switchToEffect('pen');
@@ -1400,14 +1375,44 @@
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.lineWidth = 3;
                 
-                // Draw the image at full size
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                // Draw the image centered on the canvas
+                const scale = Math.min(
+                    canvas.width / img.width,
+                    canvas.height / img.height
+                );
+                const x = (canvas.width - img.width * scale) / 2;
+                const y = (canvas.height - img.height * scale) / 2;
+                
+                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
                 
                 // Save this state in drawing history
                 drawingHistory = [canvas.toDataURL()];
                 currentHistoryIndex = 0;
             };
-            img.src = drawingData;
+            img.src = imagePath;
+        }
+
+        // Add click event listener to close save popup when clicking outside
+        document.addEventListener('click', function(event) {
+            const savePopup = document.getElementById('save-popup');
+            const saveButton = document.getElementById('save-button');
+            
+            // Check if save popup is visible and click is outside the popup and not on the save button
+            if (savePopup && 
+                savePopup.style.display === 'flex' && 
+                !savePopup.contains(event.target) && 
+                event.target !== saveButton) {
+                savePopup.style.display = 'none';
+            }
+        });
+
+        // Modify the showSavePopup function to prevent immediate closure
+        function showSavePopup() {
+            const savePopup = document.getElementById('save-popup');
+            savePopup.style.display = 'flex';
+            
+            // Prevent the click event from immediately closing the popup
+            event.stopPropagation();
         }
     </script>
 </body>
