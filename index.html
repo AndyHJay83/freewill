@@ -1289,6 +1289,108 @@
 
         // Call initializeDrawings when the page loads
         initializeDrawings();
+
+        // Effect switching functions
+        function switchToEffect(effect) {
+            currentEffect = effect;
+            const orderSettings = document.getElementById('order-settings');
+            const otherSettings = document.getElementById('other-settings');
+            const freewillSettings = document.getElementById('freewill-settings');
+            const drawingSettings = document.getElementById('drawing-settings');
+            const undoButton = document.querySelector('.circle-button:first-child');
+            const redoButton = document.querySelector('.circle-button:last-child');
+            const creationTime = document.querySelector('.creation-time');
+            const notesTitle = document.querySelector('.notes-title');
+
+            // Set static creation time
+            creationTime.textContent = '22 March 2025 at 11:35';
+            
+            // Reset canvas and text overlay visibility
+            drawingCanvas.style.display = 'none';
+            textOverlay.style.display = 'block';
+
+            // Update settings panel content
+            if (effect === 'order') {
+                orderSettings.style.display = 'block';
+                otherSettings.style.display = 'none';
+                freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'none';
+                undoButton.classList.add('disabled');
+                redoButton.classList.add('disabled');
+            } else if (effect === 'pen') {
+                orderSettings.style.display = 'none';
+                otherSettings.style.display = 'none';
+                freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'block';
+                undoButton.classList.remove('disabled');
+                redoButton.classList.add('disabled');
+                updateDrawingsList();
+                // Show canvas and ensure it's properly sized
+                drawingCanvas.style.display = 'block';
+                textOverlay.style.display = 'none';
+                resizeCanvas();
+            } else if (effect === 'new') {
+                orderSettings.style.display = 'none';
+                otherSettings.style.display = 'none';
+                freewillSettings.style.display = 'block';
+                drawingSettings.style.display = 'none';
+                undoButton.classList.add('disabled');
+                redoButton.classList.add('disabled');
+            } else {
+                orderSettings.style.display = 'none';
+                otherSettings.style.display = 'block';
+                freewillSettings.style.display = 'none';
+                drawingSettings.style.display = 'none';
+                undoButton.classList.add('disabled');
+                redoButton.classList.add('disabled');
+            }
+
+            // Effect-specific changes
+            switch(effect) {
+                case 'order':
+                    notesTitle.textContent = 'Items';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
+                        <br>
+                        Infront of you are 4 items:
+                        <br><br>
+                        A phone<br>
+                        A watch<br>
+                        Airpods<br>
+                        A wallet
+                        <br><br>
+                        Place these items in any order you wish.
+                        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>`;
+                    break;
+                case 'new':
+                    notesTitle.textContent = 'Free Will';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                        <br><br>
+                        Infront of you, you should have 3 items:
+                        <br><br>
+                        A pen<br>
+                        A wallet<br>
+                        A watch
+                        <br><br>
+                        Pick up one and give it to me.`;
+                    initializeFreeWill();
+                    break;
+                case 'paperclip':
+                    notesTitle.textContent = 'Billet?';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Billet?</h1>`;
+                    break;
+                case 'pen':
+                    notesTitle.textContent = 'Drawing';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Drawing</h1>`;
+                    textOverlay.style.display = 'none';
+                    drawingCanvas.style.display = 'block';
+                    initializeDrawing();
+                    break;
+                case 'writing':
+                    notesTitle.textContent = 'Empty';
+                    textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Empty</h1>`;
+                    break;
+            }
+        }
     </script>
 </body>
 </html>
