@@ -2012,3 +2012,31 @@
                 
                 // Check first vowel position
                 if (vowelPositions[0] !== firstVowelPos) return false;
+
+                // Check second vowel position if specified
+                if (secondVowelPos > 0 && (!vowelPositions[1] || vowelPositions[1] !== secondVowelPos)) return false;
+
+                // Check first letter shape
+                const firstLetter = word[0].toUpperCase();
+                const shape = getLetterShape(firstLetter);
+                if (shape !== firstLetterShape) return false;
+
+                return true;
+            });
+
+            // Display filtered words
+            const filteredWordsContainer = document.getElementById('filtered-words');
+            if (filteredWordsContainer) {
+                filteredWordsContainer.innerHTML = `
+                    <h2>Matching Words:</h2>
+                    <div class="word-list">
+                        ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
+                    </div>
+                    <button onclick="document.getElementById('filtered-words').style.display='none'" style="margin-top: 20px; width: 100%; padding: 10px; background: #007AFF; border: none; border-radius: 8px; color: white;">Close</button>
+                `;
+                filteredWordsContainer.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
