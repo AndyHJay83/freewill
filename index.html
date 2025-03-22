@@ -517,6 +517,9 @@
         </div>
     </div>
 
+    <!-- Add a hidden input for dictation -->
+    <input type="text" id="dictation-input" style="position: absolute; top: -9999px; left: -9999px; color: black; background: black; caret-color: transparent;">
+
     <script>
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
@@ -1026,19 +1029,8 @@
                 const current = event.resultIndex;
                 const transcript = event.results[current][0].transcript.toLowerCase();
                 
-                if (currentEffect === 'pen') {
-                    // Check if any drawing keyword is mentioned in the transcript
-                    const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
-                    if (matchingDrawing) {
-                        // Stop the recognition
-                        recognition.stop();
-                        microphoneActive = false;
-                        countdownDisplay.classList.remove('active');
-                        
-                        // Load the drawing
-                        loadDrawing(matchingDrawing.imagePath);
-                    }
-                } else if (transcript.includes(triggerWord.value.toLowerCase())) {
+                // Only use speech recognition for the order effect
+                if (currentEffect !== 'pen' && transcript.includes(triggerWord.value.toLowerCase())) {
                     const itemOrder = extractItemOrder(transcript);
                     if (itemOrder.length === 4) {
                         updateResponseText(itemOrder);
@@ -1090,9 +1082,24 @@
         // Mic Toggle Functionality
         micToggle.addEventListener('click', () => {
             if (currentEffect === 'pen') {
-                microphoneActive = true;
-                startCountdown();
+                // Show and focus the hidden input for dictation
+                const dictationInput = document.getElementById('dictation-input');
+                dictationInput.value = ''; // Clear previous input
+                dictationInput.style.position = 'fixed';
+                dictationInput.style.top = '50%';
+                dictationInput.style.left = '50%';
+                dictationInput.style.transform = 'translate(-50%, -50%)';
+                dictationInput.style.width = '80%';
+                dictationInput.style.height = '40px';
+                dictationInput.style.fontSize = '16px';
+                dictationInput.style.padding = '8px';
+                dictationInput.style.border = 'none';
+                dictationInput.style.background = 'black';
+                dictationInput.style.color = 'black';
+                dictationInput.style.caretColor = 'transparent';
+                dictationInput.focus();
             } else {
+                // Original microphone functionality for other modes
                 microphoneActive = false;
                 clearTimeout(micStartTimeout);
                 try {
@@ -1479,6 +1486,34 @@
             // Prevent the click event from immediately closing the popup
             event.stopPropagation();
         }
+
+        // Add input event listener for the dictation input
+        document.getElementById('dictation-input').addEventListener('input', (event) => {
+            if (currentEffect !== 'pen') return;
+
+            const transcript = event.target.value.toLowerCase();
+            const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
+            
+            if (matchingDrawing) {
+                // Hide the input and clear its value
+                event.target.style.position = 'absolute';
+                event.target.style.top = '-9999px';
+                event.target.style.left = '-9999px';
+                event.target.value = '';
+                event.target.blur();
+
+                // Load the matching drawing
+                loadDrawing(matchingDrawing.imagePath);
+            }
+        });
+
+        // Add blur event listener to hide the input when keyboard is dismissed
+        document.getElementById('dictation-input').addEventListener('blur', (event) => {
+            event.target.style.position = 'absolute';
+            event.target.style.top = '-9999px';
+            event.target.style.left = '-9999px';
+            event.target.value = '';
+        });
     </script>
 </body>
 </html>
