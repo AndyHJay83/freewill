@@ -571,9 +571,9 @@
             let startX = 0;
 
             // Load saved messages from localStorage
-            const firstMessage = `You have freely chosen to give me the ${selectedItems[0].replace('A ', '')}.`;
-            const secondMessage = `You have freely chosen to put the ${selectedItems[1].replace('A ', '')} in your pocket.`;
-            const finalMessage = `If I have influenced you correctly, I should be holding the ${selectedItems[0].replace('A ', '')}, you should be holding the ${selectedItems[2].replace('A ', '')}, and the ${selectedItems[1].replace('A ', '')} should be in your pocket!`;
+            const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
+            const secondMessage = localStorage.getItem('freewill-second') || 'Perfect. And the last item, keep in your hands.';
+            const finalTemplate = localStorage.getItem('freewill-final') || 'If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
 
             function getColumnFromX(x) {
                 const width = window.innerWidth;
@@ -582,7 +582,7 @@
             }
 
             function handleSwipe(e) {
-                if (scrollCount >= 2) return;
+                if (scrollCount >= 2) return; // Stop after two swipes
 
                 const touch = e.touches[0];
                 const column = getColumnFromX(touch.clientX);
@@ -591,14 +591,23 @@
                 if (!selectedItems.includes(item)) {
                     selectedItems.push(item);
                     scrollCount++;
+
+                    // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
                         newText = '<br>'.repeat(50) + firstMessage;
-                        textOverlay.innerHTML += newText;
                     } else if (scrollCount === 2) {
-                        newText = '<br>'.repeat(50) + secondMessage;
-                        textOverlay.innerHTML += newText;
+                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
+                        const finalMessage = finalTemplate
+                            .replace('[FIRST]', selectedItems[0].replace('A ', ''))
+                            .replace('[SECOND]', selectedItems[1].replace('A ', ''))
+                            .replace('[LAST]', unscrolledItem.replace('A ', ''));
+                        
+                        newText = '<br>'.repeat(50) + secondMessage +
+                                '<br>'.repeat(50) + finalMessage;
                     }
+
+                    textOverlay.innerHTML += newText;
                 }
             }
 
