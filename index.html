@@ -377,6 +377,35 @@
         .countdown.active {
             display: block;
         }
+
+        .drawing-popup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .drawing-popup-button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .drawing-popup-button.cancel {
+            background: #2C2C2E;
+            color: #007AFF;
+        }
+
+        .drawing-popup-button.save {
+            background: #007AFF;
+            color: white;
+        }
+
+        .drawing-popup input {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -443,7 +472,10 @@
     <div class="drawing-popup" id="drawing-popup">
         <input type="text" id="drawing-title" placeholder="Drawing Title">
         <input type="text" id="drawing-keyword" placeholder="Keyword">
-        <button id="save-drawing">Save Drawing</button>
+        <div class="drawing-popup-buttons">
+            <button class="drawing-popup-button cancel" id="cancel-drawing">Cancel</button>
+            <button class="drawing-popup-button save" id="save-drawing">Save</button>
+        </div>
     </div>
 
     <!-- Countdown Display -->
@@ -1313,7 +1345,8 @@
         }
 
         // Add event listeners for drawing popup
-        saveDrawingBtn.addEventListener('click', saveDrawing);
+        document.getElementById('save-drawing').addEventListener('click', saveDrawing);
+        document.getElementById('cancel-drawing').addEventListener('click', hideDrawingPopup);
         
         // Add event listeners for delete popup
         cancelDeleteBtn.addEventListener('click', hideDeletePopup);
