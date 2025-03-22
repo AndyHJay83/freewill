@@ -586,13 +586,10 @@
         }
 
         // Drawing functionality
-        let canvas, ctx, isDrawing, lastX, lastY, lastTapTime;
+        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0, lastTapTime = 0;
 
         function resizeCanvas() {
-            if (!canvas) {
-                canvas = document.getElementById('drawing-canvas');
-                ctx = canvas.getContext('2d');
-            }
+            if (!canvas) return;
             
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
@@ -623,7 +620,7 @@
             if (e.type === 'mousemove') {
                 x = e.clientX - rect.left;
                 y = e.clientY - rect.top;
-            } else {
+            } else if (e.type === 'touchmove') {
                 x = e.touches[0].clientX - rect.left;
                 y = e.touches[0].clientY - rect.top;
             }
@@ -643,64 +640,63 @@
             if (e.type === 'mousedown') {
                 lastX = e.clientX - rect.left;
                 lastY = e.clientY - rect.top;
-            } else {
+            } else if (e.type === 'touchstart') {
                 lastX = e.touches[0].clientX - rect.left;
                 lastY = e.touches[0].clientY - rect.top;
             }
         }
 
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
         function initializeDrawing() {
-            if (!canvas) {
-                canvas = document.getElementById('drawing-canvas');
-                ctx = canvas.getContext('2d');
-                isDrawing = false;
-                lastX = 0;
-                lastY = 0;
-                lastTapTime = 0;
+            canvas = document.getElementById('drawing-canvas');
+            if (!canvas) return;
 
-                // Drawing settings
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.lineWidth = 3;
-
-                // Event listeners for drawing
-                canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('mouseup', () => isDrawing = false);
-                canvas.addEventListener('mouseout', () => isDrawing = false);
-                canvas.addEventListener('touchstart', startDrawing, { passive: false });
-                canvas.addEventListener('touchmove', draw, { passive: false });
-                canvas.addEventListener('touchend', () => isDrawing = false);
-
-                // Handle window resize
-                window.addEventListener('resize', resizeCanvas);
-            }
-
-            // Make sure canvas is properly sized
+            ctx = canvas.getContext('2d');
+            
+            // Set initial canvas size
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
-            
-            // Reset drawing settings after resize
+
+            // Drawing settings
             ctx.strokeStyle = '#FFFFFF';
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
             ctx.lineWidth = 3;
 
+            // Remove any existing listeners first
+            canvas.removeEventListener('mousedown', startDrawing);
+            canvas.removeEventListener('mousemove', draw);
+            canvas.removeEventListener('mouseup', stopDrawing);
+            canvas.removeEventListener('mouseout', stopDrawing);
+            canvas.removeEventListener('touchstart', startDrawing);
+            canvas.removeEventListener('touchmove', draw);
+            canvas.removeEventListener('touchend', stopDrawing);
+
+            // Add event listeners for drawing
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // Handle window resize
+            window.removeEventListener('resize', resizeCanvas);
+            window.addEventListener('resize', resizeCanvas);
+
             const undoButton = document.querySelector('.circle-button:first-child');
 
-            // Clear canvas function
-            function clearCanvas() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-
-            // Double tap detection for undo button
+            // Double tap detection for undo button to clear canvas
             undoButton.addEventListener('click', () => {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTapTime;
                 
                 if (tapLength < 500 && tapLength > 0) {
-                    clearCanvas();
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
                 
                 lastTapTime = currentTime;
@@ -708,7 +704,7 @@
 
             // Return functions needed for external use
             return {
-                clearCanvas,
+                clearCanvas: () => ctx.clearRect(0, 0, canvas.width, canvas.height),
                 saveDrawingState: () => canvas.toDataURL(),
                 loadDrawingState: (dataUrl) => {
                     const img = new Image();
@@ -720,36 +716,6 @@
                 }
             };
         }
-
-        // Drawing functions
-        function draw(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
-            
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
-
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            [lastX, lastY] = [x, y];
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            e.preventDefault();
-            
-            const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [
-                (e.clientX || e.touches[0].clientX) - rect.left,
-                (e.clientY || e.touches[0].clientY) - rect.top
-            ];
-        }
-
-        // Initialize drawing controls
-        const drawingControls = initializeDrawing();
 
         // Save drawing functionality
         function showDrawingPopup(isEditing = false, drawingId = null) {
