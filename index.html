@@ -581,8 +581,48 @@
                 return Math.floor(x / columnWidth);
             }
 
+            async function generateAIMessage(myItem, pocketItem, handItem) {
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer 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'
+                        },
+                        body: JSON.stringify({
+                            model: "gpt-3.5-turbo",
+                            messages: [{
+                                role: "user",
+                                content: `I am doing a magic trick where a spectator gets to freely pick one of three items to give to me, then one of the remaining items to put in their pocket, and then holds on to the last item. I have then predicted that outcome, knowing what they will do ahead of time.
+
+                                The items were: ${myItem.toLowerCase()}, ${pocketItem.toLowerCase()}, and ${handItem.toLowerCase()}.
+
+                                I ended up with ${myItem.toLowerCase()}, they put ${pocketItem.toLowerCase()} in their pocket, and they're holding ${handItem.toLowerCase()}.
+
+                                Could you write me a very simple 2-3 sentence paragraph with some fun or personalised message about the items and where they've ended up. For example, if they leave me with the wallet, it could mention something about giving me the money! Or if they put the pen in their pocket, it could mention something about it being where it belongs. These types of things.
+
+                                The tone should be professional and not too cheesy, but still fun.`
+                            }],
+                            temperature: 0.7,
+                            max_tokens: 150
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('AI API request failed');
+                    }
+
+                    const data = await response.json();
+                    return data.choices[0].message.content.trim();
+                } catch (error) {
+                    console.error('Error generating AI message:', error);
+                    // Fallback message if AI fails
+                    return `If I have influenced you correctly, I should be holding the ${myItem.replace('A ', '')}, you should be holding the ${handItem.replace('A ', '')}, and the ${pocketItem.replace('A ', '')} should be in your pocket!`;
+                }
+            }
+
             function handleSwipe(e) {
-                if (scrollCount >= 2) return; // Stop after two swipes
+                if (scrollCount >= 2) return;
 
                 const touch = e.touches[0];
                 const column = getColumnFromX(touch.clientX);
@@ -592,22 +632,26 @@
                     selectedItems.push(item);
                     scrollCount++;
 
-                    // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
                         newText = '<br>'.repeat(50) + firstMessage;
+                        textOverlay.innerHTML += newText;
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
-                        const finalMessage = finalTemplate
-                            .replace('[FIRST]', selectedItems[0].replace('A ', ''))
-                            .replace('[SECOND]', selectedItems[1].replace('A ', ''))
-                            .replace('[LAST]', unscrolledItem.replace('A ', ''));
-                        
-                        newText = '<br>'.repeat(50) + secondMessage +
-                                '<br>'.repeat(50) + finalMessage;
-                    }
+                        newText = '<br>'.repeat(50) + secondMessage;
+                        textOverlay.innerHTML += newText;
 
-                    textOverlay.innerHTML += newText;
+                        // Add loading message
+                        const loadingText = '<br>'.repeat(50) + 'Generating prediction...';
+                        textOverlay.innerHTML += loadingText;
+
+                        // Generate AI message
+                        generateAIMessage(selectedItems[0], selectedItems[1], unscrolledItem)
+                            .then(aiMessage => {
+                                // Replace loading message with AI response
+                                textOverlay.innerHTML = textOverlay.innerHTML.replace('Generating prediction...', aiMessage);
+                            });
+                    }
                 }
             }
 
