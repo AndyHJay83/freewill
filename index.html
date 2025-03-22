@@ -230,7 +230,7 @@
             <div class="header-top">
                 <div class="header-left">
                     <span class="back-button"></span>
-                    <span>All on My iPhone</span>
+                    <span id="mic-toggle" style="cursor: pointer;">All on My iPhone</span>
                 </div>
                 <div class="header-center">
                     <button class="circle-button disabled">↺</button>
@@ -302,7 +302,7 @@
         </div>
         <div class="settings-group">
             <div class="settings-label">Microphone Start Delay (seconds)</div>
-            <input type="number" class="settings-input" id="mic-delay" value="30" min="1" max="300">
+            <input type="number" class="settings-input" id="mic-delay" value="5" min="1" max="300">
         </div>
         <div class="settings-group">
             <div class="settings-label">Trigger Word</div>
@@ -346,13 +346,26 @@
         };
 
         let micStartTimeout;
+        let microphoneActive = true;
+
+        const micToggle = document.getElementById('mic-toggle');
+        micToggle.addEventListener('click', () => {
+            microphoneActive = false;
+            clearTimeout(micStartTimeout);
+            recognition.stop();
+            console.log('Microphone deactivated');
+        });
 
         function startMicrophoneAfterDelay() {
+            if (!microphoneActive) return;
+            
             const delay = parseInt(micDelay.value) * 1000;
             micStartTimeout = setTimeout(() => {
                 try {
-                    recognition.start();
-                    console.log('Microphone activated');
+                    if (microphoneActive) {
+                        recognition.start();
+                        console.log('Microphone activated');
+                    }
                 } catch (err) {
                     console.error('Speech recognition error:', err);
                 }
@@ -368,6 +381,7 @@
             } catch (error) {
                 // Silently handle the error if locking orientation fails
             }
+            microphoneActive = true;
             startMicrophoneAfterDelay();
         });
 
