@@ -995,8 +995,33 @@
             recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            // Try to suppress the beep sound
+            recognition.soundstart = null;
+            recognition.soundend = null;
+            recognition.audiostart = null;
+            recognition.audioend = null;
+
+            // Additional settings to try to minimize system sounds
+            if (typeof recognition.volume !== 'undefined') recognition.volume = 0;
+            if (typeof recognition.enableBeep !== 'undefined') recognition.enableBeep = false;
 
             // Speech recognition event handling
+            recognition.onstart = () => {
+                // Attempt to play a silent audio to override system beep
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    oscillator.frequency.value = 0;
+                    oscillator.connect(audioContext.destination);
+                    oscillator.start(0);
+                    oscillator.stop(0.001);
+                } catch (e) {
+                    // Silently handle any audio context errors
+                }
+            };
+
             recognition.onresult = (event) => {
                 const current = event.resultIndex;
                 const transcript = event.results[current][0].transcript.toLowerCase();
