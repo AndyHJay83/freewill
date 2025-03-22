@@ -912,7 +912,9 @@
                 return;
             }
 
-            const drawingData = canvas.toDataURL();
+            // Generate a filename based on the title (remove spaces and special characters)
+            const filename = title.toLowerCase().replace(/[^a-z0-9]/g, '') + '.png';
+            const imagePath = './images/drawings/' + filename;
             
             if (isEditingDrawing) {
                 const index = drawings.findIndex(d => d.id === editingDrawingId);
@@ -920,7 +922,7 @@
                     ...drawings[index],
                     title,
                     keyword,
-                    data: drawingData,
+                    imagePath,
                     lastModified: new Date().toISOString()
                 };
             } else {
@@ -928,11 +930,17 @@
                     id: Date.now().toString(),
                     title,
                     keyword,
-                    data: drawingData,
+                    imagePath,
                     created: new Date().toISOString(),
                     lastModified: new Date().toISOString()
                 });
             }
+
+            // Create a download link to save the file
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
 
             localStorage.setItem('drawings', JSON.stringify(drawings));
             updateDrawingsList();
