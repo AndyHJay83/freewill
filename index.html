@@ -1746,6 +1746,8 @@
             textOverlay.style.display = 'block';
             
             // Reset numpad and filtered words containers
+            const numpadContainer = document.getElementById('numpad-container');
+            const filteredWordsContainer = document.getElementById('filtered-words');
             if (numpadContainer) numpadContainer.style.display = 'none';
             if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
 
@@ -1801,12 +1803,15 @@
                     document.getElementById('other-settings').style.display = 'block';
                     notesTitle.textContent = 'Word Filter';
                     textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
+                    textOverlay.style.display = 'block';
+                    drawingCanvas.style.display = 'none';
                     
                     // Show numpad
-                    if (numpadContainer) {
+                    const numpad = document.getElementById('numpad-container');
+                    if (numpad) {
                         currentCode = '';
-                        numpadDisplay.textContent = '';
-                        numpadContainer.style.display = 'block';
+                        document.getElementById('numpad-display').textContent = '';
+                        numpad.style.display = 'block';
                         
                         // Load word list
                         fetch('data/Long_Nouns.txt')
