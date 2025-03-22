@@ -1001,11 +1001,21 @@
                         microphoneActive = false;
                         countdownDisplay.classList.remove('active');
                         
+                        // Switch to pen effect if not already there
+                        if (currentEffect !== 'pen') {
+                            switchToEffect('pen');
+                        }
+                        
+                        // Ensure canvas is visible and properly sized
+                        drawingCanvas.style.display = 'block';
+                        textOverlay.style.display = 'none';
+                        resizeCanvas();
+                        
                         // Load the drawing
                         const img = new Image();
                         img.onload = function() {
                             ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.drawImage(img, 0, 0);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                             // Reset drawing history after loading
                             drawingHistory = [canvas.toDataURL()];
                             currentHistoryIndex = 0;
