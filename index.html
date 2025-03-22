@@ -544,7 +544,7 @@
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         newText = '<br>'.repeat(50) + 'Perfect. And the last item, keep in your hands.' +
-                                '<br>'.repeat(50) + `If I have influenced you correctly, I should be holding ${selectedItems[0]}, you should be holding ${unscrolledItem}, and ${selectedItems[1]} should be in your pocket!`;
+                                '<br>'.repeat(50) + `If I have influenced you correctly, I should be holding the ${selectedItems[0].replace('A ', '')}, you should be holding the ${unscrolledItem.replace('A ', '')}, and the ${selectedItems[1].replace('A ', '')} should be in your pocket!`;
                     }
 
                     textOverlay.innerHTML += newText;
