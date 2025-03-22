@@ -837,7 +837,7 @@
                 return;
             }
 
-            const drawingData = drawingControls.saveDrawingState();
+            const drawingData = canvas.toDataURL();
             
             if (isEditingDrawing) {
                 const index = drawings.findIndex(d => d.id === editingDrawingId);
@@ -898,7 +898,15 @@
                     const drawingId = item.dataset.id;
                     const drawing = drawings.find(d => d.id === drawingId);
                     if (drawing && drawing.data) {
-                        drawingControls.loadDrawingState(drawing.data);
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            // Reset drawing history after loading
+                            drawingHistory = [canvas.toDataURL()];
+                            currentHistoryIndex = 0;
+                        };
+                        img.src = drawing.data;
                         switchToEffect('pen');
                         settingsPanel.classList.remove('active');
                     }
