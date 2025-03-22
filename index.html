@@ -69,6 +69,15 @@
             align-items: center;
         }
 
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
         .circle-button {
             width: 28px;
             height: 28px;
@@ -82,11 +91,21 @@
             font-size: 18px;
         }
 
+        .circle-button.disabled {
+            border-color: #666;
+            color: #666;
+            pointer-events: none;
+        }
+
         .notes-title {
             color: white;
             font-size: 32px;
             font-weight: bold;
             margin-left: 5px;
+            outline: none;
+            caret-color: #007AFF;
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         #text-overlay {
@@ -146,14 +165,16 @@
                     <span class="back-button"></span>
                     <span>All on My iPhone</span>
                 </div>
+                <div class="header-center">
+                    <button class="circle-button disabled">↺</button>
+                    <button class="circle-button disabled">↻</button>
+                </div>
                 <div class="header-right">
-                    <button class="circle-button">↺</button>
-                    <button class="circle-button">↻</button>
                     <button class="circle-button">↑</button>
                     <button class="circle-button">⋯</button>
                 </div>
             </div>
-            <h1 class="notes-title">Notes</h1>
+            <h1 class="notes-title" contenteditable="true" spellcheck="true">Notes</h1>
         </div>
 
         <div id="text-overlay" contenteditable="true" spellcheck="true">
