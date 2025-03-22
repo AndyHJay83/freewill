@@ -50,6 +50,14 @@
             margin-bottom: 10px;
         }
 
+        .creation-time {
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: normal;
+        }
+
         .header-left {
             display: flex;
             align-items: center;
@@ -262,6 +270,7 @@
                     <button id="start-mic" class="circle-button">⋯</button>
                 </div>
             </div>
+            <div class="creation-time">Created 22 March 2025 at 11:35</div>
             <h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
         </div>
 
@@ -370,6 +379,10 @@
             const freewillSettings = document.getElementById('freewill-settings');
             const undoButton = document.querySelector('.circle-button:first-child');
             const redoButton = document.querySelector('.circle-button:last-child');
+            const creationTime = document.querySelector('.creation-time');
+
+            // Set static creation time
+            creationTime.textContent = 'Created 22 March 2025 at 11:35';
 
             // Reset canvas and text overlay visibility
             drawingCanvas.style.display = 'none';
