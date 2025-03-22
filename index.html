@@ -1548,15 +1548,15 @@
             'writing-btn': 'writing'
         };
 
-        // Remove any existing listeners and add new ones
+        // Add click listeners to effect buttons
         Object.entries(effectButtons).forEach(([buttonId, effect]) => {
             const button = document.getElementById(buttonId);
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-            newButton.addEventListener('click', () => {
-                console.log('Switching to effect:', effect); // Debug log
-                switchToEffect(effect);
-            });
+            if (button) {
+                button.addEventListener('click', () => {
+                    console.log('Switching to effect:', effect); // Debug log
+                    switchToEffect(effect);
+                });
+            }
         });
 
         // Settings Input Listeners
@@ -1732,9 +1732,6 @@
         // Add event listeners for delete popup
         cancelDeleteBtn.addEventListener('click', hideDeletePopup);
         confirmDeleteBtn.addEventListener('click', deleteDrawing);
-
-        // Effect Button Listeners
-        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
 
         // Effect switching functions
         function switchToEffect(effect) {
