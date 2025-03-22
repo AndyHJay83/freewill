@@ -581,6 +581,9 @@
             updateDrawingsList();
         }
 
+        // Call initializeDrawings when the page loads
+        initializeDrawings();
+
         // Modify the delete function to prevent deleting default drawings
         function deleteDrawing() {
             if (!drawingToDelete) return;
@@ -1255,40 +1258,12 @@
         // Add event listeners for drawing popup
         saveDrawingBtn.addEventListener('click', saveDrawing);
         
-        // Update start-mic button click handler
-        startMicButton.addEventListener('click', () => {
-            if (currentEffect === 'pen') {
-                showDrawingPopup();
-            } else if (currentEffect === 'new') {
-                // Reset the Free Will effect
-                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
-                    <br><br>
-                    Infront of you, you should have 3 items:
-                    <br><br>
-                    A pen<br>
-                    A wallet<br>
-                    A watch
-                    <br><br>
-                    Pick up one and give it to me.`;
-                initializeFreeWill();
-            } else {
-                // Original microphone functionality
-                microphoneActive = true;
-                startMicrophoneAfterDelay();
-                startMicButton.style.color = '#666';
-                startMicButton.style.borderColor = '#666';
-                startMicButton.disabled = true;
-            }
-        });
+        // Add event listeners for delete popup
+        cancelDeleteBtn.addEventListener('click', hideDeletePopup);
+        confirmDeleteBtn.addEventListener('click', deleteDrawing);
 
-        // Initialize drawings from localStorage
-        function initializeDrawings() {
-            drawings = JSON.parse(localStorage.getItem('drawings') || '[]');
-            updateDrawingsList();
-        }
-
-        // Call initializeDrawings when the page loads
-        initializeDrawings();
+        // Effect Button Listeners
+        document.getElementById('checklist-btn').addEventListener('click', () => switchToEffect('order'));
 
         // Effect switching functions
         function switchToEffect(effect) {
