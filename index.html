@@ -1833,6 +1833,9 @@
                         })
                         .catch(error => console.error('Error loading word list:', error));
                     break;
+                default:
+                    notesTitle.textContent = 'Empty';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Empty</h1>`;
             }
         }
 
