@@ -1013,30 +1013,15 @@
                         // Load the drawing
                         const img = new Image();
                         img.onload = function() {
-                            // Get the canvas dimensions
-                            const canvasWidth = canvas.width;
-                            const canvasHeight = canvas.height;
-                            
                             // Clear the canvas
-                            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
                             
-                            // Calculate scaling to maintain aspect ratio
-                            const scale = Math.min(
-                                canvasWidth / img.width,
-                                canvasHeight / img.height
-                            );
+                            // Set white stroke style for visibility
+                            ctx.strokeStyle = '#FFFFFF';
+                            ctx.lineWidth = 3;
                             
-                            // Calculate centered position
-                            const x = (canvasWidth - img.width * scale) / 2;
-                            const y = (canvasHeight - img.height * scale) / 2;
-                            
-                            // Draw the image scaled and centered
-                            ctx.drawImage(
-                                img,
-                                x, y,
-                                img.width * scale,
-                                img.height * scale
-                            );
+                            // Draw the image at full canvas size
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                             
                             // Save this state in drawing history
                             drawingHistory = [canvas.toDataURL()];
