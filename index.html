@@ -424,9 +424,7 @@
                         A wallet<br>
                         A watch
                         <br><br>
-                        Pick up one and give it to me.
-                        <br>`.repeat(50) + // Add placeholder content to match final length
-                        `<br>`.repeat(100); // Additional spacing for the final messages
+                        Pick up one and give it to me.`;
                     initializeFreeWill();
                     break;
                 case 'paperclip':
@@ -574,7 +572,7 @@
                     // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
-                        newText = firstMessage;
+                        newText = '<br>'.repeat(50) + firstMessage;
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         const finalMessage = finalTemplate
@@ -582,14 +580,11 @@
                             .replace('[SECOND]', selectedItems[1].replace('A ', ''))
                             .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        newText = secondMessage + '<br><br>' + finalMessage;
+                        newText = '<br>'.repeat(50) + secondMessage +
+                                '<br>'.repeat(50) + finalMessage;
                     }
 
-                    // Replace the placeholder content with actual content
-                    const content = textOverlay.innerHTML.split('Pick up one and give it to me.')[0];
-                    textOverlay.innerHTML = content + 'Pick up one and give it to me.' + 
-                        (scrollCount === 1 ? '<br><br>' + newText : 
-                         scrollCount === 2 ? '<br><br>' + newText : '');
+                    textOverlay.innerHTML += newText;
                 }
             }
 
@@ -638,9 +633,7 @@
                     A wallet<br>
                     A watch
                     <br><br>
-                    Pick up one and give it to me.
-                    <br>`.repeat(50) + // Add placeholder content to match final length
-                    `<br>`.repeat(100); // Additional spacing for the final messages
+                    Pick up one and give it to me.`;
                 initializeFreeWill();
             } else {
                 // Original microphone functionality
