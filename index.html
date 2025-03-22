@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#000000">
+    <title>Notes</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            color: #FFB800;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 17px;
+        }
+
+        .back-button::before {
+            content: "‹";
+            font-size: 32px;
+            line-height: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .circle-button {
+            width: 24px;
+            height: 24px;
+            border: 1.5px solid #FFB800;
+            border-radius: 50%;
+            background: none;
+            color: #FFB800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .circle-button.disabled {
+            border-color: #666;
+            color: #666;
+            pointer-events: none;
+        }
+
+        .notes-title {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-left: 5px;
+            outline: none;
+            caret-color: #007AFF;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        #text-overlay {
+            flex: 1;
+            padding: 20px;
+            color: white;
+            font-size: 18px;
+            line-height: 1.5;
+            outline: none;
+            caret-color: #007AFF;
+            -webkit-user-select: text;
+            user-select: text;
+            overflow-y: auto;
+        }
+
+        .toolbar {
+            height: 85px;
+            padding: 15px;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .toolbar-button {
+            width: 28px;
+            height: 28px;
+            background: none;
+            border: none;
+            color: #FFB800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toolbar-button img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .home-indicator {
+            width: 135px;
+            height: 5px;
+            background: white;
+            border-radius: 100px;
+            margin: 8px auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Settings Panel Styles */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+            color: white;
+        }
+
+        .settings-panel.active {
+            right: 0;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .settings-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            color: #007AFF;
+            font-size: 17px;
+        }
+
+        .settings-group {
+            margin-bottom: 25px;
+        }
+
+        .settings-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .settings-input {
+            width: 100%;
+            background: #1C1C1E;
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            font-size: 17px;
+            margin-bottom: 15px;
+        }
+
+        .settings-textarea {
+            height: 100px;
+            resize: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <div class="header-top">
+                <div class="header-left">
+                    <span class="back-button"></span>
+                    <span id="mic-toggle" style="cursor: pointer;">All on My iPhone</span>
+                </div>
+                <div class="header-center">
+                    <button class="circle-button disabled">↺</button>
+                    <button class="circle-button disabled">↻</button>
+                </div>
+                <div class="header-right">
+                    <button id="settings-button" style="background: none; border: none; padding: 0; margin: 0;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFB800">
+                            <path d="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/>
+                        </svg>
+                    </button>
+                    <button id="start-mic" class="circle-button">⋯</button>
+                </div>
+            </div>
+            <h1 class="notes-title" contenteditable="true" spellcheck="true">Items</h1>
+        </div>
+
+        <div id="text-overlay" contenteditable="true" spellcheck="true">
+            Infront of you are 4 items:
+            <br><br>
+            A phone<br>
+            A watch<br>
+            Airpods<br>
+            A wallet
+            <br><br>
+            Place these items in any order you wish.
+            <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+        </div>
+
+        <div class="toolbar">
+            <button class="toolbar-button">
+                <img src="images/toolbar-checklist.png" alt="Checklist">
+            </button>
+            <button class="toolbar-button">
+                <img src="images/toolbar-paperclip.png" alt="Attach">
+            </button>
+            <button class="toolbar-button">
+                <img src="images/toolbar-pen.png" alt="Draw">
+            </button>
+            <button class="toolbar-button">
+                <img src="images/toolbar-writing.png" alt="Writing Tools">
+            </button>
+            <button class="toolbar-button">
+                <img src="images/toolbar-new.png" alt="New Note">
+            </button>
+        </div>
+        <div class="home-indicator"></div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-header">
+            <div class="settings-title">Settings</div>
+            <button class="close-settings" id="close-settings">Done</button>
+        </div>
+        <div class="settings-group">
+            <div class="settings-label">Microphone Start Delay (seconds)</div>
+            <input type="number" class="settings-input" id="mic-delay" value="5" min="1" max="300">
+        </div>
+        <div class="settings-group">
+            <div class="settings-label">Trigger Word</div>
+            <input type="text" class="settings-input" id="trigger-word" value="perfect">
+        </div>
+        <div class="settings-group">
+            <div class="settings-label">Response Template</div>
+            <textarea class="settings-input settings-textarea" id="response-template">If I have influenced you correctly, you should've placed [ITEM 1] first, then [ITEM 2], followed by [ITEM 3] and finally, [ITEM 4]. How did I do?</textarea>
+        </div>
+    </div>
+
+    <script>
+        // Settings Panel Functionality
+        const settingsButton = document.getElementById('settings-button');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeSettings = document.getElementById('close-settings');
+        const micDelay = document.getElementById('mic-delay');
+        const triggerWord = document.getElementById('trigger-word');
+        const responseTemplate = document.getElementById('response-template');
+
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.classList.add('active');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsPanel.classList.remove('active');
+        });
+
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        // Store the original items
+        const items = {
+            'phone': 'a phone',
+            'watch': 'a watch',
+            'airpods': 'Airpods',
+            'wallet': 'a wallet'
+        };
+
+        let micStartTimeout;
+        let microphoneActive = true;
+
+        const micToggle = document.getElementById('mic-toggle');
+        micToggle.addEventListener('click', () => {
+            microphoneActive = false;
+            clearTimeout(micStartTimeout);
+            try {
+                recognition.stop();
+            } catch (err) {
+                // Silently handle any errors when stopping recognition
+            }
+            // Reset the start button
+            startMicButton.style.color = '#FFB800';
+            startMicButton.style.borderColor = '#FFB800';
+            startMicButton.disabled = false;
+        });
+
+        function startMicrophoneAfterDelay() {
+            if (!microphoneActive) return;
+            
+            const delay = parseInt(micDelay.value) * 1000;
+            micStartTimeout = setTimeout(() => {
+                if (!microphoneActive) {
+                    // Reset the start button if microphone was deactivated during delay
+                    startMicButton.style.color = '#FFB800';
+                    startMicButton.style.borderColor = '#FFB800';
+                    startMicButton.disabled = false;
+                    return;
+                }
+                try {
+                    recognition.start();
+                } catch (err) {
+                    // Silently handle any errors when starting recognition
+                }
+            }, delay);
+        }
+
+        // Initialize microphone timer when page loads
+        document.addEventListener("DOMContentLoaded", () => {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('portrait');
+                }
+            } catch (error) {
+                // Silently handle the error if locking orientation fails
+            }
+        });
+
+        // Add start button functionality
+        const startMicButton = document.getElementById('start-mic');
+        startMicButton.addEventListener('click', () => {
+            microphoneActive = true;
+            startMicrophoneAfterDelay();
+            startMicButton.style.color = '#666';
+            startMicButton.style.borderColor = '#666';
+            startMicButton.disabled = true;
+        });
+
+        // Function to extract item order from speech
+        function extractItemOrder(transcript) {
+            const lowerTranscript = transcript.toLowerCase();
+            const itemOrder = [];
+            
+            Object.keys(items).forEach(item => {
+                const index = lowerTranscript.indexOf(item);
+                if (index !== -1) {
+                    itemOrder.push({
+                        item: item,
+                        index: index
+                    });
+                }
+            });
+
+            // Sort by position in transcript
+            itemOrder.sort((a, b) => a.index - b.index);
+            return itemOrder.map(item => item.item);
+        }
+
+        // Function to update the response text
+        function updateResponseText(itemOrder) {
+            const textOverlay = document.getElementById('text-overlay');
+            const template = responseTemplate.value;
+            
+            let response = template
+                .replace('[ITEM 1]', items[itemOrder[0]].replace('a ', 'the ').replace('an ', 'the '))
+                .replace('[ITEM 2]', items[itemOrder[1]].replace('a ', 'the ').replace('an ', 'the '))
+                .replace('[ITEM 3]', items[itemOrder[2]].replace('a ', 'the ').replace('an ', 'the '))
+                .replace('[ITEM 4]', items[itemOrder[3]].replace('a ', 'the ').replace('an ', 'the '));
+
+            // Split content at the last visible paragraph
+            const content = textOverlay.innerHTML.split('Place these items in any order you wish.');
+            
+            // Update the hidden paragraph with many line breaks before it
+            textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.' + '<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>' + response;
+        }
+
+        // Speech recognition event handling
+        let transcript = '';
+
+        recognition.onresult = (event) => {
+            const current = event.resultIndex;
+            transcript = event.results[current][0].transcript.toLowerCase();
+            
+            if (transcript.includes(triggerWord.value.toLowerCase())) {
+                const itemOrder = extractItemOrder(transcript);
+                if (itemOrder.length === 4) {
+                    updateResponseText(itemOrder);
+                    microphoneActive = false;
+                    try {
+                        recognition.stop();
+                    } catch (err) {
+                        // Silently handle any errors when stopping recognition
+                    }
+                }
+            }
+        };
+
+        recognition.onend = () => {
+            // Only restart if still active and haven't found trigger word
+            if (microphoneActive && !transcript.includes(triggerWord.value.toLowerCase())) {
+                try {
+                    recognition.start();
+                } catch (err) {
+                    // Silently handle any errors when restarting recognition
+                }
+            }
+        };
+
+        // Reset microphone timer when settings change
+        micDelay.addEventListener('change', () => {
+            clearTimeout(micStartTimeout);
+            recognition.stop();
+            startMicrophoneAfterDelay();
+        });
+
+        triggerWord.addEventListener('change', () => {
+            clearTimeout(micStartTimeout);
+            recognition.stop();
+            startMicrophoneAfterDelay();
+        });
+    </script>
+</body>
+</html>
