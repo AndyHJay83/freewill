@@ -1560,7 +1560,10 @@
                         Effect: ${effect}<br>
                         Current Effect: ${currentEffect}`;
                     
-                    switchToEffect(effect);
+                    // Add a small delay before switching effects
+                    setTimeout(() => {
+                        switchToEffect(effect);
+                    }, 1000);
                 });
             }
         });
