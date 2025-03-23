@@ -482,6 +482,23 @@
             padding: 5px 10px;
             border-radius: 5px;
         }
+
+        .lexicon-letters {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .lexicon-letter {
+            background: rgba(255, 184, 0, 0.2);
+            color: #FFB800;
+            border: 1px solid #FFB800;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -2049,16 +2066,55 @@
                 }
             }
 
-            // Display filtered words with position indicator
+            // Display filtered words with position indicator and lexicon letters
             const filteredWordsContainer = document.getElementById('filtered-words');
             if (filteredWordsContainer) {
+                // Get unique letters at the lexicon position
+                const lexiconLetters = [...new Set(filteredWords.map(word => word[maxDiffPosition].toUpperCase()))].sort();
+                
                 filteredWordsContainer.innerHTML = `
-                    <div style="text-align: center; font-size: 24px; margin-bottom: 20px; color: #FFB800;">${maxDiffPosition + 1}</div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 24px; color: #FFB800; margin-bottom: 10px;">${maxDiffPosition + 1}</div>
+                        <div class="lexicon-letters" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            ${lexiconLetters.map(letter => 
+                                `<button class="lexicon-letter" style="background: rgba(255, 184, 0, 0.2); color: #FFB800; border: 1px solid #FFB800; padding: 5px 15px; border-radius: 5px; font-size: 18px; cursor: pointer;">${letter}</button>`
+                            ).join('')}
+                        </div>
+                    </div>
                     <div class="word-list">
                         ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
                     </div>
                     <button onclick="document.getElementById('filtered-words').style.display='none'" style="margin-top: 20px; width: 100%; padding: 10px; background: #007AFF; border: none; border-radius: 8px; color: white;">Close</button>
                 `;
+
+                // Add click handlers to lexicon letters
+                const wordList = document.querySelector('.word-list');
+                document.querySelectorAll('.lexicon-letter').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const selectedLetter = button.textContent;
+                        // Filter words that match the selected letter at the lexicon position
+                        const filteredByLetter = filteredWords.filter(word => 
+                            word[maxDiffPosition].toUpperCase() === selectedLetter
+                        );
+                        
+                        // Update the word list
+                        wordList.innerHTML = filteredByLetter
+                            .map(word => `<div class="word">${word}</div>`)
+                            .join('');
+                            
+                        // Update visual state of buttons
+                        document.querySelectorAll('.lexicon-letter').forEach(btn => {
+                            if (btn === button) {
+                                btn.style.background = '#FFB800';
+                                btn.style.color = '#000';
+                            } else {
+                                btn.style.background = 'rgba(255, 184, 0, 0.2)';
+                                btn.style.color = '#FFB800';
+                            }
+                        });
+                    });
+                });
+                
                 filteredWordsContainer.style.display = 'block';
             }
         }
