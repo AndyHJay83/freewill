@@ -668,6 +668,26 @@
     <script>
         // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Add double-click handlers for undo/redo buttons
+            const undoButton = document.querySelector('.circle-button:first-child');
+            const redoButton = document.querySelector('.circle-button:last-child');
+
+            [undoButton, redoButton].forEach(button => {
+                button.addEventListener('dblclick', () => {
+                    if (currentEffect === 'writing') {
+                        // Reset the Writing effect
+                        currentCode = '';
+                        const numpadDisplay = document.getElementById('numpad-display');
+                        const numpadContainer = document.getElementById('numpad-container');
+                        const filteredWordsContainer = document.getElementById('filtered-words');
+                        
+                        if (numpadDisplay) numpadDisplay.textContent = '';
+                        if (numpadContainer) numpadContainer.style.display = 'block';
+                        if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
+                    }
+                });
+            });
+
             // Effect Button Listeners
             const effectButtons = {
                 'checklist-btn': 'order',
