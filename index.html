@@ -526,19 +526,19 @@
         <canvas id="drawing-canvas"></canvas>
 
         <div class="toolbar">
-            <button class="toolbar-button" id="checklist-btn">
+            <button class="toolbar-button" id="checklist-btn" onclick="switchToEffect('order')">
                 <img src="./images/toolbar-checklist.PNG" alt="Checklist">
             </button>
-            <button class="toolbar-button" id="paperclip-btn">
+            <button class="toolbar-button" id="paperclip-btn" onclick="switchToEffect('paperclip')">
                 <img src="./images/toolbar-paperclip.PNG" alt="Attach">
             </button>
-            <button class="toolbar-button" id="pen-btn">
+            <button class="toolbar-button" id="pen-btn" onclick="switchToEffect('pen')">
                 <img src="./images/toolbar-pen.PNG" alt="Draw">
             </button>
-            <button class="toolbar-button" id="writing-btn">
+            <button class="toolbar-button" id="writing-btn" onclick="switchToEffect('writing')">
                 <img src="./images/toolbar-writing.PNG" alt="Writing Tools">
             </button>
-            <button class="toolbar-button" id="new-btn">
+            <button class="toolbar-button" id="new-btn" onclick="switchToEffect('new')">
                 <img src="./images/toolbar-new.PNG" alt="New Note">
             </button>
         </div>
@@ -648,46 +648,8 @@
     <div id="filtered-words"></div>
 
     <script>
-        // Initialize variables
-        const settingsButton = document.getElementById('settings-button');
-        const settingsPanel = document.getElementById('settings-panel');
-        const closeSettings = document.getElementById('close-settings');
-        const micDelay = document.getElementById('mic-delay');
-        const triggerWord = document.getElementById('trigger-word');
-        const responseTemplate = document.getElementById('response-template');
-        const textOverlay = document.getElementById('text-overlay');
-        const drawingCanvas = document.getElementById('drawing-canvas');
-        const notesTitle = document.querySelector('.notes-title');
-        let currentEffect = 'order';
-
-        // Add event listeners for toolbar buttons
-        document.getElementById('checklist-btn').addEventListener('click', () => {
-            console.log('Checklist clicked');
-            switchToEffect('order');
-        });
-
-        document.getElementById('paperclip-btn').addEventListener('click', () => {
-            console.log('Paperclip clicked');
-            switchToEffect('paperclip');
-        });
-
-        document.getElementById('pen-btn').addEventListener('click', () => {
-            console.log('Pen clicked');
-            switchToEffect('pen');
-        });
-
-        document.getElementById('writing-btn').addEventListener('click', () => {
-            console.log('Writing clicked');
-            switchToEffect('writing');
-        });
-
-        document.getElementById('new-btn').addEventListener('click', () => {
-            console.log('New clicked');
-            switchToEffect('new');
-        });
-
-        // Define switchToEffect function and attach it to window
-        function switchToEffect(effect) {
+        // Make switchToEffect available globally immediately
+        window.switchToEffect = function(effect) {
             console.log('switchToEffect called with:', effect); // Debug log
             currentEffect = effect;
             
@@ -795,10 +757,19 @@
                     notesTitle.textContent = 'Error';
                     textOverlay.innerHTML = `<h1 class="notes-title">Error</h1>`;
             }
-        }
+        };
 
-        // Attach switchToEffect to window object
-        window.switchToEffect = switchToEffect;
+        // Initialize variables
+        const settingsButton = document.getElementById('settings-button');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeSettings = document.getElementById('close-settings');
+        const micDelay = document.getElementById('mic-delay');
+        const triggerWord = document.getElementById('trigger-word');
+        const responseTemplate = document.getElementById('response-template');
+        const textOverlay = document.getElementById('text-overlay');
+        const drawingCanvas = document.getElementById('drawing-canvas');
+        const notesTitle = document.querySelector('.notes-title');
+        let currentEffect = 'order';
 
         // Initialize with Order effect
         switchToEffect('order');
