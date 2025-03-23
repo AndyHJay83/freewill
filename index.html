@@ -592,7 +592,7 @@
             </div>
             <div class="settings-group">
                 <div class="settings-label">Final Message Template</div>
-                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!</textarea>
             </div>
             <button class="save-settings" id="save-freewill">Save Changes</button>
         </div>
@@ -647,27 +647,33 @@
     <div id="filtered-words"></div>
 
     <script>
-        // Effect Button Listeners
-        const effectButtons = {
-            'checklist-btn': 'order',
-            'new-btn': 'new',
-            'paperclip-btn': 'paperclip',
-            'pen-btn': 'pen',
-            'writing-btn': 'writing'
-        };
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Effect Button Listeners
+            const effectButtons = {
+                'checklist-btn': 'order',
+                'new-btn': 'new',
+                'paperclip-btn': 'paperclip',
+                'pen-btn': 'pen',
+                'writing-btn': 'writing'
+            };
 
-        // Add click listeners to effect buttons
-        Object.entries(effectButtons).forEach(([buttonId, effect]) => {
-            const button = document.getElementById(buttonId);
-            if (button) {
-                button.addEventListener('click', () => {
-                    switchToEffect(effect);
-                });
-            }
+            // Add click listeners to effect buttons
+            Object.entries(effectButtons).forEach(([buttonId, effect]) => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        console.log('Button clicked:', buttonId, 'Effect:', effect); // Debug log
+                        switchToEffect(effect);
+                    });
+                } else {
+                    console.error('Button not found:', buttonId); // Debug log
+                }
+            });
+
+            // Initialize with Order effect
+            switchToEffect('order');
         });
-
-        // Initialize with Order effect
-        switchToEffect('order');
 
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
@@ -2043,55 +2049,16 @@
                 }
             }
 
-            // Display filtered words with position indicator and lexicon letters
+            // Display filtered words with position indicator
             const filteredWordsContainer = document.getElementById('filtered-words');
             if (filteredWordsContainer) {
-                // Get unique letters at the max difference position
-                const lexiconLetters = [...new Set(filteredWords.map(word => word[maxDiffPosition].toUpperCase()))].sort();
-                
                 filteredWordsContainer.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="font-size: 24px; color: #FFB800; margin-bottom: 10px;">${maxDiffPosition + 1}</div>
-                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                            ${lexiconLetters.map(letter => 
-                                `<button class="lexicon-letter" style="background: rgba(255, 184, 0, 0.2); color: #FFB800; border: 1px solid #FFB800; padding: 5px 15px; border-radius: 5px; font-size: 18px; cursor: pointer;">${letter}</button>`
-                            ).join('')}
-                        </div>
-                    </div>
-                    <div class="word-list" id="filtered-word-list">
+                    <div style="text-align: center; font-size: 24px; margin-bottom: 20px; color: #FFB800;">${maxDiffPosition + 1}</div>
+                    <div class="word-list">
                         ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
                     </div>
                     <button onclick="document.getElementById('filtered-words').style.display='none'" style="margin-top: 20px; width: 100%; padding: 10px; background: #007AFF; border: none; border-radius: 8px; color: white;">Close</button>
                 `;
-
-                // Add click handlers to lexicon letters
-                const wordList = document.getElementById('filtered-word-list');
-                filteredWordsContainer.querySelectorAll('.lexicon-letter').forEach(button => {
-                    button.addEventListener('click', () => {
-                        const selectedLetter = button.textContent;
-                        // Filter words that match the selected letter at the lexicon position
-                        const matchingWords = filteredWords.filter(word => 
-                            word[maxDiffPosition].toUpperCase() === selectedLetter
-                        );
-                        
-                        // Update the word list
-                        wordList.innerHTML = matchingWords.map(word => 
-                            `<div class="word">${word}</div>`
-                        ).join('');
-
-                        // Update button styles
-                        filteredWordsContainer.querySelectorAll('.lexicon-letter').forEach(btn => {
-                            if (btn === button) {
-                                btn.style.background = '#FFB800';
-                                btn.style.color = '#000';
-                            } else {
-                                btn.style.background = 'rgba(255, 184, 0, 0.2)';
-                                btn.style.color = '#FFB800';
-                            }
-                        });
-                    });
-                });
-                
                 filteredWordsContainer.style.display = 'block';
             }
         }
