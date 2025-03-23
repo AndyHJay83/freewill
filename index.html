@@ -622,7 +622,7 @@
             </div>
             <div class="settings-group">
                 <div class="settings-label">Final Message Template</div>
-                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!</textarea>
             </div>
             <button class="save-settings" id="save-freewill">Save Changes</button>
         </div>
@@ -2111,12 +2111,6 @@
                 // Get unique letters at the lexicon position
                 const lexiconLetters = [...new Set(filteredWords.map(word => word[maxDiffPosition].toUpperCase()))].sort();
                 
-                // Set the title to the first word in the filtered list
-                const notesTitle = document.querySelector('.notes-title');
-                if (notesTitle && filteredWords.length > 0) {
-                    notesTitle.textContent = filteredWords[0];
-                }
-                
                 filteredWordsContainer.innerHTML = `
                     <div style="text-align: center; margin-bottom: 20px;">
                         <div style="font-size: 24px; color: #FFB800; margin-bottom: 10px;">${maxDiffPosition + 1}</div>
@@ -2160,11 +2154,6 @@
                                 btn.style.color = '#FFB800';
                             }
                         });
-
-                        // Set the title to the first word in the filtered list
-                        if (filteredByLetter.length > 0) {
-                            notesTitle.textContent = filteredByLetter[0];
-                        }
 
                         // Add click handlers to the new word buttons
                         addWordClickHandlers();
