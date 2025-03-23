@@ -6,10 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#000000">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <!-- Version: 2 -->
+    <meta http-equiv="Expires" content="-1">
+    <!-- Version: 3 -->
     <title>Notes</title>
     <style>
         * {
@@ -650,7 +650,7 @@
     </div>
     <div id="filtered-words"></div>
 
-    <script>
+    <script src="?v=3">
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
         const settingsPanel = document.getElementById('settings-panel');
