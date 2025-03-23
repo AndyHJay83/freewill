@@ -2082,7 +2082,9 @@
                         </div>
                     </div>
                     <div class="word-list">
-                        ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
+                        ${filteredWords.map(word => 
+                            `<button class="word" style="background: rgba(255, 255, 255, 0.1); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: inherit;">${word}</button>`
+                        ).join('')}
                     </div>
                     <button onclick="document.getElementById('filtered-words').style.display='none'" style="margin-top: 20px; width: 100%; padding: 10px; background: #007AFF; border: none; border-radius: 8px; color: white;">Close</button>
                 `;
@@ -2097,10 +2099,11 @@
                             word[maxDiffPosition].toUpperCase() === selectedLetter
                         );
                         
-                        // Update the word list
+                        // Update the word list with clickable buttons
                         wordList.innerHTML = filteredByLetter
-                            .map(word => `<div class="word">${word}</div>`)
-                            .join('');
+                            .map(word => 
+                                `<button class="word" style="background: rgba(255, 255, 255, 0.1); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: inherit;">${word}</button>`
+                            ).join('');
                             
                         // Update visual state of buttons
                         document.querySelectorAll('.lexicon-letter').forEach(btn => {
@@ -2112,8 +2115,27 @@
                                 btn.style.color = '#FFB800';
                             }
                         });
+
+                        // Add click handlers to the new word buttons
+                        addWordClickHandlers();
                     });
                 });
+
+                // Function to add click handlers to word buttons
+                function addWordClickHandlers() {
+                    document.querySelectorAll('.word-list .word').forEach(wordButton => {
+                        wordButton.addEventListener('click', () => {
+                            const selectedWord = wordButton.textContent;
+                            const notesTitle = document.querySelector('.notes-title');
+                            if (notesTitle) {
+                                notesTitle.textContent = selectedWord;
+                            }
+                        });
+                    });
+                }
+
+                // Add initial click handlers to word buttons
+                addWordClickHandlers();
                 
                 filteredWordsContainer.style.display = 'block';
             }
