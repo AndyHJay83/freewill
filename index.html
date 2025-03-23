@@ -592,7 +592,7 @@
             </div>
             <div class="settings-group">
                 <div class="settings-label">Final Message Template</div>
-                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!</textarea>
+                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
             </div>
             <button class="save-settings" id="save-freewill">Save Changes</button>
         </div>
@@ -2032,11 +2032,27 @@
                 return true;
             });
 
+            // Analyze letter position differences
+            let positionDifferences = new Array(length).fill(0);
+            
+            // For each position, count unique letters
+            for (let pos = 0; pos < length; pos++) {
+                const lettersAtPosition = new Set();
+                filteredWords.forEach(word => {
+                    lettersAtPosition.add(word[pos].toUpperCase());
+                });
+                positionDifferences[pos] = lettersAtPosition.size;
+            }
+
+            // Find position with maximum differences
+            const maxDifferences = Math.max(...positionDifferences);
+            const maxDiffPosition = positionDifferences.indexOf(maxDifferences) + 1; // Convert to 1-based position
+
             // Display filtered words
             const filteredWordsContainer = document.getElementById('filtered-words');
             if (filteredWordsContainer) {
                 filteredWordsContainer.innerHTML = `
-                    <h2>Matching Words:</h2>
+                    <div style="text-align: center; font-size: 24px; margin-bottom: 20px; color: #FFB800;">${maxDiffPosition}</div>
                     <div class="word-list">
                         ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
                     </div>
