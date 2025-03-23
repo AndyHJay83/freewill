@@ -2032,11 +2032,28 @@
                 return true;
             });
 
-            // Display filtered words
+            // Analyze differences at each position
+            const positionDifferences = [];
+            for (let pos = 0; pos < length; pos++) {
+                const lettersAtPosition = new Set(filteredWords.map(word => word[pos].toUpperCase()));
+                positionDifferences[pos] = lettersAtPosition.size;
+            }
+
+            // Find position with most differences
+            let maxDiffPosition = 0;
+            let maxDiffs = positionDifferences[0];
+            for (let i = 1; i < positionDifferences.length; i++) {
+                if (positionDifferences[i] > maxDiffs) {
+                    maxDiffs = positionDifferences[i];
+                    maxDiffPosition = i;
+                }
+            }
+
+            // Display filtered words with position indicator
             const filteredWordsContainer = document.getElementById('filtered-words');
             if (filteredWordsContainer) {
                 filteredWordsContainer.innerHTML = `
-                    <h2>Matching Words:</h2>
+                    <div style="text-align: center; font-size: 24px; margin-bottom: 20px; color: #FFB800;">${maxDiffPosition + 1}</div>
                     <div class="word-list">
                         ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
                     </div>
