@@ -609,7 +609,7 @@
             </div>
             <div class="settings-group">
                 <div class="settings-label">Final Message Template</div>
-                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!</textarea>
             </div>
             <button class="save-settings" id="save-freewill">Save Changes</button>
         </div>
@@ -2082,9 +2082,7 @@
                         </div>
                     </div>
                     <div class="word-list">
-                        ${filteredWords.map(word => 
-                            `<button class="word" style="background: rgba(255, 255, 255, 0.1); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 16px;">${word}</button>`
-                        ).join('')}
+                        ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
                     </div>
                     <button onclick="document.getElementById('filtered-words').style.display='none'" style="margin-top: 20px; width: 100%; padding: 10px; background: #007AFF; border: none; border-radius: 8px; color: white;">Close</button>
                 `;
@@ -2099,11 +2097,10 @@
                             word[maxDiffPosition].toUpperCase() === selectedLetter
                         );
                         
-                        // Update the word list with clickable buttons
+                        // Update the word list
                         wordList.innerHTML = filteredByLetter
-                            .map(word => 
-                                `<button class="word" style="background: rgba(255, 255, 255, 0.1); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 16px;">${word}</button>`
-                            ).join('');
+                            .map(word => `<div class="word">${word}</div>`)
+                            .join('');
                             
                         // Update visual state of buttons
                         document.querySelectorAll('.lexicon-letter').forEach(btn => {
@@ -2115,28 +2112,8 @@
                                 btn.style.color = '#FFB800';
                             }
                         });
-
-                        // Add click handlers to the new word buttons
-                        addWordClickHandlers();
                     });
                 });
-
-                // Function to add click handlers to word buttons
-                function addWordClickHandlers() {
-                    document.querySelectorAll('.word').forEach(wordButton => {
-                        wordButton.addEventListener('click', () => {
-                            const selectedWord = wordButton.textContent;
-                            // Set the word as the title
-                            notesTitle.textContent = selectedWord;
-                            textOverlay.innerHTML = `<h1 class="notes-title">${selectedWord}</h1>`;
-                            // Close the filtered words panel
-                            filteredWordsContainer.style.display = 'none';
-                        });
-                    });
-                }
-
-                // Add initial click handlers to word buttons
-                addWordClickHandlers();
                 
                 filteredWordsContainer.style.display = 'block';
             }
