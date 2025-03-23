@@ -658,7 +658,9 @@
             <button class="numpad-btn">7</button>
             <button class="numpad-btn">8</button>
             <button class="numpad-btn">9</button>
+            <button class="numpad-btn backspace" style="font-size: 16px;">←</button>
             <button class="numpad-btn">0</button>
+            <button class="numpad-btn" style="visibility: hidden;"></button>
         </div>
     </div>
     <div id="filtered-words"></div>
@@ -1976,7 +1978,11 @@
         // Add click handlers to numpad buttons
         document.querySelectorAll('.numpad-btn').forEach(button => {
             button.addEventListener('click', () => {
-                if (currentCode.length < 4 && button.textContent) {
+                if (button.classList.contains('backspace')) {
+                    // Handle backspace
+                    currentCode = currentCode.slice(0, -1);
+                    numpadDisplay.textContent = currentCode;
+                } else if (currentCode.length < 4 && button.textContent) {
                     currentCode += button.textContent;
                     numpadDisplay.textContent = currentCode;
 
