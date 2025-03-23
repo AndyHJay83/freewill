@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Last updated: 2024-03-23 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -525,19 +526,19 @@
         <canvas id="drawing-canvas"></canvas>
 
         <div class="toolbar">
-            <button class="toolbar-button" id="checklist-btn" onclick="console.log('Checklist button clicked')">
+            <button class="toolbar-button" id="checklist-btn" onclick="console.log('Checklist clicked'); window.switchToEffect('order');">
                 <img src="./images/toolbar-checklist.PNG" alt="Checklist">
             </button>
-            <button class="toolbar-button" id="paperclip-btn" onclick="console.log('Paperclip button clicked')">
+            <button class="toolbar-button" id="paperclip-btn" onclick="console.log('Paperclip clicked'); window.switchToEffect('paperclip');">
                 <img src="./images/toolbar-paperclip.PNG" alt="Attach">
             </button>
-            <button class="toolbar-button" id="pen-btn" onclick="console.log('Pen button clicked')">
+            <button class="toolbar-button" id="pen-btn" onclick="console.log('Pen clicked'); window.switchToEffect('pen');">
                 <img src="./images/toolbar-pen.PNG" alt="Draw">
             </button>
-            <button class="toolbar-button" id="writing-btn" onclick="console.log('Writing button clicked')">
+            <button class="toolbar-button" id="writing-btn" onclick="console.log('Writing clicked'); window.switchToEffect('writing');">
                 <img src="./images/toolbar-writing.PNG" alt="Writing Tools">
             </button>
-            <button class="toolbar-button" id="new-btn" onclick="console.log('New button clicked')">
+            <button class="toolbar-button" id="new-btn" onclick="console.log('New clicked'); window.switchToEffect('new');">
                 <img src="./images/toolbar-new.PNG" alt="New Note">
             </button>
         </div>
@@ -659,8 +660,8 @@
         const notesTitle = document.querySelector('.notes-title');
         let currentEffect = 'order';
 
-        // Make switchToEffect available globally
-        window.switchToEffect = function(effect) {
+        // Define switchToEffect function and attach it to window
+        function switchToEffect(effect) {
             console.log('switchToEffect called with:', effect); // Debug log
             currentEffect = effect;
             
@@ -768,14 +769,10 @@
                     notesTitle.textContent = 'Error';
                     textOverlay.innerHTML = `<h1 class="notes-title">Error</h1>`;
             }
-        };
+        }
 
-        // Add direct click handlers to buttons
-        document.getElementById('checklist-btn').onclick = () => switchToEffect('order');
-        document.getElementById('paperclip-btn').onclick = () => switchToEffect('paperclip');
-        document.getElementById('pen-btn').onclick = () => switchToEffect('pen');
-        document.getElementById('writing-btn').onclick = () => switchToEffect('writing');
-        document.getElementById('new-btn').onclick = () => switchToEffect('new');
+        // Attach switchToEffect to window object
+        window.switchToEffect = switchToEffect;
 
         // Initialize with Order effect
         switchToEffect('order');
