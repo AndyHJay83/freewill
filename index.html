@@ -512,6 +512,39 @@
             font-size: 18px;
             cursor: pointer;
         }
+
+        .writing-settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #FFB800;
+            border-radius: 10px;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            z-index: 1000;
+            color: white;
+            display: none;
+        }
+
+        .writing-settings-panel h2 {
+            color: #FFB800;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .writing-settings-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #FFB800;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -677,6 +710,15 @@
         </div>
     </div>
     <div id="filtered-words"></div>
+
+    <!-- Add Writing Settings Panel -->
+    <div id="writing-settings" class="writing-settings-panel">
+        <button class="close-btn" onclick="document.getElementById('writing-settings').style.display='none'">×</button>
+        <h2>Writing Settings</h2>
+        <div style="text-align: center; color: #666;">
+            Settings panel content will go here
+        </div>
+    </div>
 
     <script>
         // Wait for DOM to be fully loaded
@@ -2020,11 +2062,22 @@
                     numpadDisplay.textContent = currentCode;
 
                     if (currentCode.length === 4) {
-                        // Hide numpad and filter words
-                        setTimeout(() => {
-                            numpadContainer.style.display = 'none';
-                            filterWords(currentCode);
-                        }, 500);
+                        // Check for special code "1234"
+                        if (currentCode === "1234") {
+                            // Show settings panel
+                            document.getElementById('writing-settings').style.display = 'block';
+                            // Clear the code
+                            setTimeout(() => {
+                                currentCode = '';
+                                numpadDisplay.textContent = '';
+                            }, 500);
+                        } else {
+                            // Normal word filtering
+                            setTimeout(() => {
+                                numpadContainer.style.display = 'none';
+                                filterWords(currentCode);
+                            }, 500);
+                        }
                     }
                 }
             });
