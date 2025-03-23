@@ -536,6 +536,52 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
+
+        /* Add toggle switch styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #FFB800;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
@@ -655,6 +701,30 @@
         </div>
     </div>
     <div id="filtered-words"></div>
+
+    <!-- Add Master Settings Panel -->
+    <div id="master-settings" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 15px; width: 80%; max-width: 400px; z-index: 2000; color: white;">
+        <h2 style="text-align: center; color: #FFB800; margin-bottom: 20px;">Master Settings</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                <span>Light Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="light-mode-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                <span>Android Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="android-mode-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="document.getElementById('master-settings').style.display='none'" style="width: 100%; padding: 10px; background: #007AFF; border: none; border-radius: 8px; color: white; cursor: pointer;">Close</button>
+    </div>
 
     <script>
         // Wait for DOM to be fully loaded
@@ -2038,6 +2108,16 @@
 
         // Function to filter words based on code
         function filterWords(code) {
+            // Check for master settings code
+            if (code === '1234') {
+                const masterSettings = document.getElementById('master-settings');
+                if (masterSettings) {
+                    masterSettings.style.display = 'block';
+                    numpadContainer.style.display = 'none';
+                }
+                return;
+            }
+
             if (!window.wordList) {
                 console.error('Word list not loaded');
                 return;
