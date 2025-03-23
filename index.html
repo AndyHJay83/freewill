@@ -512,6 +512,30 @@
             font-size: 18px;
             cursor: pointer;
         }
+
+        .save-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .save-button:hover {
+            background: #0056b3;
+        }
+
+        .save-feedback {
+            color: #4CAF50;
+            text-align: center;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -588,61 +612,15 @@
     <div class="countdown" id="countdown"></div>
 
     <!-- Settings Panel -->
-    <div class="settings-panel" id="settings-panel">
-        <div class="settings-header">
-            <div class="settings-title">Settings</div>
-            <button class="close-settings" id="close-settings">Done</button>
-        </div>
-        
-        <!-- Order Effect Settings -->
-        <div class="effect-settings" id="order-settings">
-            <div class="settings-group">
-                <div class="settings-label">Microphone Start Delay (seconds)</div>
-                <input type="number" class="settings-input" id="mic-delay" value="5" min="1" max="300">
+    <div id="settings-panel" class="settings-panel">
+        <div class="settings-content">
+            <h2>Settings</h2>
+            <div id="effect-specific-settings">
+                <!-- Settings will be dynamically inserted here -->
             </div>
-            <div class="settings-group">
-                <div class="settings-label">Trigger Word</div>
-                <input type="text" class="settings-input" id="trigger-word" value="perfect">
-            </div>
-            <div class="settings-group">
-                <div class="settings-label">Response Template</div>
-                <textarea class="settings-input settings-textarea" id="response-template">If I have influenced you correctly, you should've placed [ITEM 1] first, then [ITEM 2], followed by [ITEM 3] and finally, [ITEM 4]. How did I do?</textarea>
-            </div>
-        </div>
-
-        <!-- Free Will Effect Settings -->
-        <div class="effect-settings" id="freewill-settings">
-            <div class="settings-group">
-                <div class="settings-label">First Message</div>
-                <textarea class="settings-input settings-textarea" id="freewill-first">Great. Now pick up another item and put it in your pocket.</textarea>
-            </div>
-            <div class="settings-group">
-                <div class="settings-label">Second Message</div>
-                <textarea class="settings-input settings-textarea" id="freewill-second">Perfect. And the last item, keep in your hands.</textarea>
-            </div>
-            <div class="settings-group">
-                <div class="settings-label">Final Message Template</div>
-                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!</textarea>
-            </div>
-            <button class="save-settings" id="save-freewill">Save Changes</button>
-        </div>
-
-        <!-- Other Effect Settings (Coming Soon) -->
-        <div class="effect-settings" id="other-settings">
-            <div class="settings-group">
-                <div class="settings-label">Updates Coming Soon</div>
-                <p style="color: #666; margin-top: 10px;">New features and settings will be available in a future update.</p>
-            </div>
-        </div>
-
-        <!-- Drawing Effect Settings -->
-        <div class="effect-settings" id="drawing-settings">
-            <div class="settings-group">
-                <div class="settings-label">Saved Drawings</div>
-                <div class="drawing-list" id="drawing-list">
-                    <!-- Drawings will be populated here -->
-                </div>
-            </div>
+            <button class="save-button" onclick="saveEffectSettings()">Save Settings</button>
+            <div class="save-feedback" id="save-feedback">Settings saved!</div>
+            <button onclick="document.getElementById('settings-panel').style.display='none'" class="close-button">Close</button>
         </div>
     </div>
 
@@ -1902,6 +1880,9 @@
                     notesTitle.textContent = 'Error';
                     textOverlay.innerHTML = `<h1 class="notes-title">Error</h1>`;
             }
+
+            // Load effect-specific settings
+            loadEffectSettings(effect);
         }
 
         // Function to load a drawing onto the canvas
@@ -2177,6 +2158,63 @@
                 addWordClickHandlers();
                 
                 filteredWordsContainer.style.display = 'block';
+            }
+        }
+
+        // Function to save effect-specific settings
+        function saveEffectSettings() {
+            const currentEffect = window.currentEffect;
+            const settings = {};
+
+            // Save settings based on current effect
+            switch(currentEffect) {
+                case 'order':
+                    settings.firstMessage = document.getElementById('first-message').value;
+                    settings.secondMessage = document.getElementById('second-message').value;
+                    settings.finalTemplate = document.getElementById('final-template').value;
+                    break;
+                case 'pen':
+                    settings.penSize = document.getElementById('pen-size').value;
+                    settings.penColor = document.getElementById('pen-color').value;
+                    break;
+                case 'writing':
+                    // Save any writing-specific settings here if needed
+                    break;
+                // Add cases for other effects as needed
+            }
+
+            // Save to localStorage with effect-specific key
+            localStorage.setItem(`freewill-settings-${currentEffect}`, JSON.stringify(settings));
+
+            // Show save feedback
+            const feedback = document.getElementById('save-feedback');
+            feedback.style.opacity = '1';
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+            }, 2000);
+        }
+
+        // Function to load effect-specific settings
+        function loadEffectSettings(effect) {
+            const savedSettings = localStorage.getItem(`freewill-settings-${effect}`);
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                switch(effect) {
+                    case 'order':
+                        if (settings.firstMessage) document.getElementById('first-message').value = settings.firstMessage;
+                        if (settings.secondMessage) document.getElementById('second-message').value = settings.secondMessage;
+                        if (settings.finalTemplate) document.getElementById('final-template').value = settings.finalTemplate;
+                        break;
+                    case 'pen':
+                        if (settings.penSize) document.getElementById('pen-size').value = settings.penSize;
+                        if (settings.penColor) document.getElementById('pen-color').value = settings.penColor;
+                        break;
+                    case 'writing':
+                        // Load any writing-specific settings here if needed
+                        break;
+                    // Add cases for other effects as needed
+                }
             }
         }
     </script>
