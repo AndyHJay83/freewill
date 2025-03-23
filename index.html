@@ -1553,17 +1553,7 @@
             const button = document.getElementById(buttonId);
             if (button) {
                 button.addEventListener('click', () => {
-                    // Show debug info in text overlay
-                    textOverlay.innerHTML = `<h1 class="notes-title">Debug Info</h1>
-                        <br><br>
-                        Button clicked: ${buttonId}<br>
-                        Effect: ${effect}<br>
-                        Current Effect: ${currentEffect}`;
-                    
-                    // Add a small delay before switching effects
-                    setTimeout(() => {
-                        switchToEffect(effect);
-                    }, 1000);
+                    switchToEffect(effect);
                 });
             }
         });
