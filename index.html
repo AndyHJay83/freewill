@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Last updated: 2024-03-23 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -526,21 +525,21 @@
         <canvas id="drawing-canvas"></canvas>
 
         <div class="toolbar">
-            <button class="toolbar-button" id="checklist-btn" onclick="console.log('Checklist clicked'); switchToEffect('order');">
+            <button class="toolbar-button" id="checklist-btn">
                 <img src="./images/toolbar-checklist.PNG" alt="Checklist">
-            </button>
-            <button class="toolbar-button" id="paperclip-btn" onclick="console.log('Paperclip clicked'); switchToEffect('paperclip');">
+                </button>
+            <button class="toolbar-button" id="paperclip-btn">
                 <img src="./images/toolbar-paperclip.PNG" alt="Attach">
-            </button>
-            <button class="toolbar-button" id="pen-btn" onclick="console.log('Pen clicked'); switchToEffect('pen');">
+                </button>
+            <button class="toolbar-button" id="pen-btn">
                 <img src="./images/toolbar-pen.PNG" alt="Draw">
-            </button>
-            <button class="toolbar-button" id="writing-btn" onclick="console.log('Writing clicked'); switchToEffect('writing');">
+                </button>
+            <button class="toolbar-button" id="writing-btn">
                 <img src="./images/toolbar-writing.PNG" alt="Writing Tools">
-            </button>
-            <button class="toolbar-button" id="new-btn" onclick="console.log('New clicked'); switchToEffect('new');">
+                </button>
+            <button class="toolbar-button" id="new-btn">
                 <img src="./images/toolbar-new.PNG" alt="New Note">
-            </button>
+                </button>
         </div>
         <div class="home-indicator"></div>
     </div>
@@ -593,7 +592,7 @@
             </div>
             <div class="settings-group">
                 <div class="settings-label">Final Message Template</div>
-                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+                <textarea class="settings-input settings-textarea" id="freewill-final">If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!</textarea>
             </div>
             <button class="save-settings" id="save-freewill">Save Changes</button>
         </div>
@@ -648,20 +647,35 @@
     <div id="filtered-words"></div>
 
     <script>
-        // Initialize all variables at the top
-        let currentEffect = 'order';
-        let currentCode = '';
-        let microphoneActive = false;
-        let micStartTimeout;
-        let recognition;
-        let startMicButton;
-        let micToggle;
-        let numpadDisplay;
-        let numpadContainer;
-        let filteredWordsContainer;
-        let letterShapes;
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Effect Button Listeners
+            const effectButtons = {
+                'checklist-btn': 'order',
+                'new-btn': 'new',
+                'paperclip-btn': 'paperclip',
+                'pen-btn': 'pen',
+                'writing-btn': 'writing'
+            };
 
-        // Get DOM elements
+            // Add click listeners to effect buttons
+            Object.entries(effectButtons).forEach(([buttonId, effect]) => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        console.log('Button clicked:', buttonId, 'Effect:', effect); // Debug log
+                        switchToEffect(effect);
+                    });
+                } else {
+                    console.error('Button not found:', buttonId); // Debug log
+                }
+            });
+
+            // Initialize with Order effect
+            switchToEffect('order');
+        });
+
+        // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
         const settingsPanel = document.getElementById('settings-panel');
         const closeSettings = document.getElementById('close-settings');
@@ -671,382 +685,448 @@
         const textOverlay = document.getElementById('text-overlay');
         const drawingCanvas = document.getElementById('drawing-canvas');
         const notesTitle = document.querySelector('.notes-title');
+
+        let currentEffect = 'order';
+
+        // Add these at the top with other variables
+        let currentDrawingData = null;
+        let drawings = JSON.parse(localStorage.getItem('drawings') || '[]');
+        let isEditingDrawing = false;
+        let editingDrawingId = null;
         const drawingPopup = document.getElementById('drawing-popup');
         const drawingTitle = document.getElementById('drawing-title');
         const drawingKeyword = document.getElementById('drawing-keyword');
+        const saveDrawingBtn = document.getElementById('save-drawing');
+        const countdownDisplay = document.getElementById('countdown');
+
+        let drawingToDelete = null;
         const deletePopup = document.getElementById('delete-popup');
         const cancelDeleteBtn = document.getElementById('cancel-delete');
         const confirmDeleteBtn = document.getElementById('confirm-delete');
-        const countdownDisplay = document.getElementById('countdown');
+        let drawingPressTimer;
+        let undoPressTimer;
+        let drawingHistory = [];
+        let currentHistoryIndex = -1;
 
-        // Store the original items
-        const items = {
-            'phone': 'a phone',
-            'watch': 'a watch',
-            'airpods': 'Airpods',
-            'wallet': 'a wallet'
-        };
+        // Default drawings that will always be available
+        const defaultDrawings = [
+            // Original drawings
+            {
+                id: 'default-1',
+                title: 'Cross',
+                keyword: 'towards',
+                imagePath: './images/drawings/cross.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-2',
+                title: 'Square',
+                keyword: 'fantastic',
+                imagePath: './images/drawings/square.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-3',
+                title: 'Circle',
+                keyword: 'wonderful',
+                imagePath: './images/drawings/circle.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-4',
+                title: 'Triangle',
+                keyword: 'fair',
+                imagePath: './images/drawings/triangle.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-5',
+                title: 'Waves',
+                keyword: 'free',
+                imagePath: './images/drawings/waves.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-6',
+                title: 'Star',
+                keyword: 'finally',
+                imagePath: './images/drawings/star.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            // New drawings
+            {
+                id: 'default-7',
+                title: 'Stickman',
+                keyword: 'human',
+                imagePath: './images/drawings/stickman.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-8',
+                title: 'Smiley',
+                keyword: 'happy',
+                imagePath: './images/drawings/smiley.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-9',
+                title: 'Heart',
+                keyword: 'affectionate',
+                imagePath: './images/drawings/heart.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-10',
+                title: 'Boat',
+                keyword: 'serene',
+                imagePath: './images/drawings/boat.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-11',
+                title: 'House',
+                keyword: 'family',
+                imagePath: './images/drawings/house.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-12',
+                title: 'Bicycle',
+                keyword: 'movement',
+                imagePath: './images/drawings/bicycle.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-13',
+                title: 'Car',
+                keyword: 'speed',
+                imagePath: './images/drawings/car.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-14',
+                title: 'Train',
+                keyword: 'momentum',
+                imagePath: './images/drawings/train.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-15',
+                title: 'Plane',
+                keyword: 'holiday',
+                imagePath: './images/drawings/plane.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-16',
+                title: 'Rocket',
+                keyword: 'space',
+                imagePath: './images/drawings/rocket.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-17',
+                title: 'Television',
+                keyword: 'visual',
+                imagePath: './images/drawings/tv.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-18',
+                title: 'Phone',
+                keyword: 'communicate',
+                imagePath: './images/drawings/phone.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-19',
+                title: 'Book',
+                keyword: 'literature',
+                imagePath: './images/drawings/book.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-20',
+                title: 'Wine Glass',
+                keyword: 'drink',
+                imagePath: './images/drawings/glass.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-21',
+                title: 'Pencil',
+                keyword: 'artistic',
+                imagePath: './images/drawings/pencil.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-22',
+                title: 'Padlock',
+                keyword: 'security',
+                imagePath: './images/drawings/padlock.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-23',
+                title: 'Clock',
+                keyword: 'time',
+                imagePath: './images/drawings/clock.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-24',
+                title: 'Knife',
+                keyword: 'sharp',
+                imagePath: './images/drawings/knife.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-25',
+                title: 'Gun',
+                keyword: 'dangerous',
+                imagePath: './images/drawings/gun.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-26',
+                title: 'Tree',
+                keyword: 'natural',
+                imagePath: './images/drawings/tree.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-27',
+                title: 'Flower',
+                keyword: 'organic',
+                imagePath: './images/drawings/flower.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-28',
+                title: 'Moon',
+                keyword: 'night',
+                imagePath: './images/drawings/moon.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-29',
+                title: 'Rain',
+                keyword: 'weather',
+                imagePath: './images/drawings/rain.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-30',
+                title: 'Lightning',
+                keyword: 'powerful',
+                imagePath: './images/drawings/lightning.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-31',
+                title: 'Dog',
+                keyword: 'loyal',
+                imagePath: './images/drawings/dog.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-32',
+                title: 'Fish',
+                keyword: 'underwater',
+                imagePath: './images/drawings/fish.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-33',
+                title: 'Bird',
+                keyword: 'sky',
+                imagePath: './images/drawings/bird.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-34',
+                title: 'Alien',
+                keyword: 'weird',
+                imagePath: './images/drawings/alien.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-35',
+                title: 'Ghost',
+                keyword: 'spooky',
+                imagePath: './images/drawings/ghost.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-36',
+                title: 'Skull',
+                keyword: 'morbid',
+                imagePath: './images/drawings/skull.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-37',
+                title: 'Scribble',
+                keyword: 'nothing',
+                imagePath: './images/drawings/scribble.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-38',
+                title: 'NO',
+                keyword: 'negative',
+                imagePath: './images/drawings/no.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-39',
+                title: 'Penis',
+                keyword: 'naughty',
+                imagePath: './images/drawings/penis.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            },
+            {
+                id: 'default-40',
+                title: 'Offensive',
+                keyword: 'offensive',
+                imagePath: './images/drawings/offensive.png',
+                created: '2024-03-22T11:35:00.000Z',
+                lastModified: '2024-03-22T11:35:00.000Z'
+            }
+        ];
 
-        // Letter shape categories
-        letterShapes = {
-            straight: ['A', 'E', 'F', 'H', 'I', 'K', 'L', 'M', 'N', 'T', 'V', 'W', 'X', 'Y', 'Z'],
-            mixed: ['B', 'D', 'G', 'J', 'P', 'Q', 'R', 'U', 'W', 'Y'],
-            curved: ['C', 'G', 'J', 'O', 'Q', 'S', 'U', 'W']
-        };
-
-        // Make switchToEffect available globally immediately
-        window.switchToEffect = function(effect) {
-            console.log('switchToEffect called with:', effect); // Debug log
-            currentEffect = effect;
+        // Initialize drawings from localStorage and merge with defaults
+        function initializeDrawings() {
+            const userDrawings = JSON.parse(localStorage.getItem('drawings') || '[]');
             
-            // Hide all settings panels first
-            document.querySelectorAll('.effect-settings').forEach(panel => {
-                panel.style.display = 'none';
-            });
-
-            // Reset UI elements
-            const undoButton = document.querySelector('.circle-button:first-child');
-            const redoButton = document.querySelector('.circle-button:last-child');
-            undoButton.classList.add('disabled');
-            redoButton.classList.add('disabled');
-
-            // Set static creation time
-            document.querySelector('.creation-time').textContent = '22 March 2025 at 11:35';
-
-            // Reset canvas and text overlay visibility
-            drawingCanvas.style.display = 'none';
-            textOverlay.style.display = 'block';
+            // Filter out any default drawings that might have been saved
+            const filteredUserDrawings = userDrawings.filter(drawing => 
+                !drawing.id.startsWith('default-')
+            );
             
-            // Reset numpad and filtered words containers
-            if (numpadContainer) numpadContainer.style.display = 'none';
-            if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
-
-            // Effect-specific changes
-            switch(effect) {
-                case 'writing':
-                    console.log('Setting up writing effect'); // Debug log
-                    document.getElementById('other-settings').style.display = 'block';
-                    notesTitle.textContent = 'Word Filter';
-                    textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
-                    
-                    // Show numpad
-                    if (numpadContainer) {
-                        currentCode = '';
-                        if (numpadDisplay) numpadDisplay.textContent = '';
-                        numpadContainer.style.display = 'block';
-                        
-                        // Load word list
-                        fetch('data/Long_Nouns.txt')
-                            .then(response => response.text())
-                            .then(text => {
-                                window.wordList = text.split('\n')
-                                    .map(word => word.trim())
-                                    .filter(word => word.length > 0);
-                                console.log('Word list loaded:', window.wordList.length, 'words'); // Debug log
-                            })
-                            .catch(error => console.error('Error loading word list:', error));
-                    }
-                    break;
-                    
-                case 'order':
-                    document.getElementById('order-settings').style.display = 'block';
-                    notesTitle.textContent = 'Items';
-                    textOverlay.innerHTML = `<h1 class="notes-title">Items</h1>
-                        <br>
-                        Infront of you are 4 items:
-                        <br><br>
-                        A phone<br>
-                        A watch<br>
-                        Airpods<br>
-                        A wallet
-                        <br><br>
-                        Place these items in any order you wish.
-                        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>`;
-                    break;
-                    
-                case 'new':
-                    document.getElementById('freewill-settings').style.display = 'block';
-                    notesTitle.textContent = 'Free Will';
-                    textOverlay.innerHTML = `<h1 class="notes-title">Free Will</h1>
-                        <br><br>
-                        Infront of you, you should have 3 items:
-                        <br><br>
-                        A pen<br>
-                        A wallet<br>
-                        A watch
-                        <br><br>
-                        Pick up one and give it to me.`;
-                    initializeFreeWill();
-                    break;
-                    
-                case 'paperclip':
-                    document.getElementById('other-settings').style.display = 'block';
-                    notesTitle.textContent = 'Billet?';
-                    textOverlay.innerHTML = `<h1 class="notes-title">Billet?</h1>`;
-                    break;
-                    
-                case 'pen':
-                    document.getElementById('drawing-settings').style.display = 'block';
-                    notesTitle.textContent = 'Drawing';
-                    textOverlay.style.display = 'none';
-                    drawingCanvas.style.display = 'block';
-                    initializeDrawing();
-                    undoButton.classList.remove('disabled');
-                    break;
-                    
-                default:
-                    document.getElementById('other-settings').style.display = 'block';
-                    notesTitle.textContent = 'Error';
-                    textOverlay.innerHTML = `<h1 class="notes-title">Error</h1>`;
-            }
-        };
-
-        // Settings Panel Functionality
-        settingsButton.addEventListener('click', () => {
-            settingsPanel.classList.add('active');
-        });
-
-        closeSettings.addEventListener('click', () => {
-            settingsPanel.classList.remove('active');
-        });
-
-        // Initialize with Order effect
-        switchToEffect('order');
-
-        // Mic Toggle Functionality
-        micToggle = document.getElementById('mic-toggle');
-        micToggle.addEventListener('click', () => {
-            if (currentEffect === 'pen') {
-                // Show and focus the hidden input for dictation
-                const dictationInput = document.getElementById('dictation-input');
-                dictationInput.value = ''; // Clear previous input
-                dictationInput.style.position = 'fixed';
-                dictationInput.style.top = '50%';
-                dictationInput.style.left = '50%';
-                dictationInput.style.transform = 'translate(-50%, -50%)';
-                dictationInput.style.width = '80%';
-                dictationInput.style.height = '40px';
-                dictationInput.style.fontSize = '16px';
-                dictationInput.style.padding = '8px';
-                dictationInput.style.border = 'none';
-                dictationInput.style.background = 'black';
-                dictationInput.style.color = 'black';
-                dictationInput.style.caretColor = 'transparent';
-                dictationInput.focus();
-            } else {
-                // Original microphone functionality for other modes
-                microphoneActive = false;
-                clearTimeout(micStartTimeout);
-                try {
-                    recognition.stop();
-                } catch (err) {
-                    // Silently handle any errors when stopping recognition
-                }
-                startMicButton.style.color = '#FFB800';
-                startMicButton.style.borderColor = '#FFB800';
-                startMicButton.disabled = false;
-            }
-        });
-
-        // Start Mic Button Functionality
-        startMicButton = document.getElementById('start-mic');
-        startMicButton.addEventListener('click', () => {
-            if (currentEffect === 'pen') {
-                showDrawingPopup();
-            } else if (currentEffect === 'new') {
-                // Reset the Free Will effect
-                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
-                    <br><br>
-                    Infront of you, you should have 3 items:
-                    <br><br>
-                    A pen<br>
-                    A wallet<br>
-                    A watch
-                    <br><br>
-                    Pick up one and give it to me.`;
-                initializeFreeWill();
-            } else {
-                // Original microphone functionality
-                microphoneActive = true;
-                startMicrophoneAfterDelay();
-                startMicButton.style.color = '#666';
-                startMicButton.style.borderColor = '#666';
-                startMicButton.disabled = true;
-            }
-        });
-
-        // Settings Input Listeners
-        micDelay.addEventListener('change', () => {
-            if (microphoneActive) {
-                clearTimeout(micStartTimeout);
-                try {
-                    recognition.stop();
-                } catch (err) {}
-                startMicrophoneAfterDelay();
-            }
-        });
-
-        triggerWord.addEventListener('change', () => {
-            if (microphoneActive) {
-                clearTimeout(micStartTimeout);
-                try {
-                    recognition.stop();
-                } catch (err) {}
-                startMicrophoneAfterDelay();
-            }
-        });
-
-        function startMicrophoneAfterDelay() {
-            if (!microphoneActive) return;
+            // Merge default drawings with user drawings
+            drawings = [...defaultDrawings, ...filteredUserDrawings];
             
-            const delay = parseInt(micDelay.value) * 1000;
-            micStartTimeout = setTimeout(() => {
-                if (!microphoneActive) {
-                    startMicButton.style.color = '#FFB800';
-                    startMicButton.style.borderColor = '#FFB800';
-                    startMicButton.disabled = false;
-                    return;
-                }
-                try {
-                    recognition.start();
-                } catch (err) {
-                    // Silently handle any errors when starting recognition
-                }
-            }, delay);
+            // Save the merged list back to localStorage
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            
+            updateDrawingsList();
         }
 
-        // Free Will functionality
-        function initializeFreeWill() {
-            const textOverlay = document.getElementById('text-overlay');
-            const items = ['A pen', 'A wallet', 'A watch'];
-            let scrollCount = 0;
-            let selectedItems = [];
-            let startY = 0;
-            let startX = 0;
+        // Call initializeDrawings when the page loads
+        initializeDrawings();
 
-            // Load saved messages from localStorage
-            const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
-            const secondMessage = localStorage.getItem('freewill-second') || 'Perfect. And the last item, keep in your hands.';
-            const finalTemplate = localStorage.getItem('freewill-final') || 'If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
-
-            function getColumnFromX(x) {
-                const width = window.innerWidth;
-                const columnWidth = width / 3;
-                return Math.floor(x / columnWidth);
+        // Modify the delete function to prevent deleting default drawings
+        function deleteDrawing() {
+            if (!drawingToDelete) return;
+            
+            // Check if trying to delete a default drawing
+            if (drawingToDelete.startsWith('default-')) {
+                alert('Default drawings cannot be deleted');
+                hideDeletePopup();
+                return;
             }
-
-            function handleSwipe(e) {
-                if (scrollCount >= 2) return; // Stop after two swipes
-
-                const touch = e.touches[0];
-                const column = getColumnFromX(touch.clientX);
-                const item = items[column];
-
-                if (!selectedItems.includes(item)) {
-                    selectedItems.push(item);
-                    scrollCount++;
-
-                    // Generate new text based on scroll count
-                    let newText = '';
-                    if (scrollCount === 1) {
-                        newText = '<br>'.repeat(100) + firstMessage + '<br>'.repeat(100);
-                    } else if (scrollCount === 2) {
-                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
-                        const finalMessage = finalTemplate
-                            .replace('[FIRST]', selectedItems[0].replace('A ', ''))
-                            .replace('[SECOND]', selectedItems[1].replace('A ', ''))
-                            .replace('[LAST]', unscrolledItem.replace('A ', ''));
-                        
-                        newText = '<br>'.repeat(100) + secondMessage +
-                                '<br>'.repeat(100) + finalMessage;
-                    }
-
-                    textOverlay.innerHTML += newText;
-                }
-            }
-
-            textOverlay.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                startX = e.touches[0].clientX;
-            });
-
-            textOverlay.addEventListener('touchmove', (e) => {
-                const touch = e.touches[0];
-                const deltaY = touch.clientY - startY;
-                const deltaX = touch.clientX - startX;
-
-                // Only trigger if it's a vertical swipe (up)
-                if (deltaY < -50 && Math.abs(deltaX) < Math.abs(deltaY)) {
-                    handleSwipe(e);
-                }
-            });
+            
+            drawings = drawings.filter(d => d.id !== drawingToDelete);
+            localStorage.setItem('drawings', JSON.stringify(drawings));
+            updateDrawingsList();
+            hideDeletePopup();
         }
 
-        // Save Free Will settings
-        document.getElementById('save-freewill').addEventListener('click', () => {
-            const firstMessage = document.getElementById('freewill-first').value;
-            const secondMessage = document.getElementById('freewill-second').value;
-            const finalTemplate = document.getElementById('freewill-final').value;
+        // Update the drawing list to show a lock icon for default drawings
+        function updateDrawingsList() {
+            const drawingList = document.getElementById('drawing-list');
+            if (!drawingList) return;
 
-            localStorage.setItem('freewill-first', firstMessage);
-            localStorage.setItem('freewill-second', secondMessage);
-            localStorage.setItem('freewill-final', finalTemplate);
+            drawingList.innerHTML = drawings
+                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+                .map(drawing => `
+                    <div class="drawing-item" data-id="${drawing.id}">
+                        <div class="drawing-item-title">
+                            ${drawing.title}
+                            ${drawing.id.startsWith('default-') ? 
+                                '<span style="color: #666; font-size: 12px;"> (default)</span>' : 
+                                ''}
+                        </div>
+                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
+                    </div>
+                `).join('');
 
-            // Show feedback
-            const saveButton = document.getElementById('save-freewill');
-            saveButton.textContent = 'Saved!';
-            setTimeout(() => {
-                saveButton.textContent = 'Save Changes';
-            }, 2000);
-        });
+            // Add click handlers to drawing items
+            document.querySelectorAll('.drawing-item').forEach(item => {
+                const isDefault = item.dataset.id.startsWith('default-');
+                
+                // Add click handler for loading the drawing
+                item.addEventListener('click', () => {
+                    const drawingId = item.dataset.id;
+                    const drawing = drawings.find(d => d.id === drawingId);
+                    if (drawing && drawing.imagePath) {
+                        loadDrawing(drawing.imagePath);
+                        settingsPanel.classList.remove('active');
+                    }
+                });
 
-        // Function to extract item order from speech
-        function extractItemOrder(transcript) {
-            const lowerTranscript = transcript.toLowerCase();
-            const itemOrder = [];
-            
-            Object.keys(items).forEach(item => {
-                const index = lowerTranscript.indexOf(item);
-                if (index !== -1) {
-                    itemOrder.push({
-                        item: item,
-                        index: index
+                // Add long-press handler for deletion (non-default drawings only)
+                if (!isDefault) {
+                    item.addEventListener('touchstart', () => {
+                        drawingPressTimer = setTimeout(() => {
+                            showDeletePopup(item.dataset.id);
+                        }, 500);
+                    });
+
+                    item.addEventListener('touchend', () => {
+                        clearTimeout(drawingPressTimer);
+                    });
+
+                    item.addEventListener('touchmove', () => {
+                        clearTimeout(drawingPressTimer);
                     });
                 }
             });
-
-            // Sort by position in transcript
-            itemOrder.sort((a, b) => a.index - b.index);
-            return itemOrder.map(item => item.item);
         }
-
-        // Function to update the response text
-        function updateResponseText(itemOrder) {
-            const textOverlay = document.getElementById('text-overlay');
-            const template = responseTemplate.value;
-            
-            let response = template
-                .replace('[ITEM 1]', items[itemOrder[0]].replace('a ', 'the ').replace('an ', 'the '))
-                .replace('[ITEM 2]', items[itemOrder[1]].replace('a ', 'the ').replace('an ', 'the '))
-                .replace('[ITEM 3]', items[itemOrder[2]].replace('a ', 'the ').replace('an ', 'the '))
-                .replace('[ITEM 4]', items[itemOrder[3]].replace('a ', 'the ').replace('an ', 'the '));
-
-            // Split content at the last visible paragraph
-            const content = textOverlay.innerHTML.split('Place these items in any order you wish.');
-            
-            // Update the hidden paragraph with many line breaks before it
-            textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.' + '<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>' + response;
-        }
-
-        // Add event listeners for drawing popup
-        document.getElementById('save-drawing').addEventListener('click', saveDrawing);
-        document.getElementById('cancel-drawing').addEventListener('click', hideDrawingPopup);
-        
-        // Add event listeners for delete popup
-        cancelDeleteBtn.addEventListener('click', hideDeletePopup);
-        confirmDeleteBtn.addEventListener('click', deleteDrawing);
 
         // Drawing functionality
+        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0, lastTapTime = 0;
+
         function resizeCanvas() {
             if (!canvas) return;
             
@@ -1410,6 +1490,368 @@
             console.log('Speech Recognition not available');
         }
 
+        // Store the original items
+        const items = {
+            'phone': 'a phone',
+            'watch': 'a watch',
+            'airpods': 'Airpods',
+            'wallet': 'a wallet'
+        };
+
+        // Settings Panel Functionality
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.classList.add('active');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsPanel.classList.remove('active');
+        });
+
+        // Mic Toggle Functionality
+        micToggle.addEventListener('click', () => {
+            if (currentEffect === 'pen') {
+                // Show and focus the hidden input for dictation
+                const dictationInput = document.getElementById('dictation-input');
+                dictationInput.value = ''; // Clear previous input
+                dictationInput.style.position = 'fixed';
+                dictationInput.style.top = '50%';
+                dictationInput.style.left = '50%';
+                dictationInput.style.transform = 'translate(-50%, -50%)';
+                dictationInput.style.width = '80%';
+                dictationInput.style.height = '40px';
+                dictationInput.style.fontSize = '16px';
+                dictationInput.style.padding = '8px';
+                dictationInput.style.border = 'none';
+                dictationInput.style.background = 'black';
+                dictationInput.style.color = 'black';
+                dictationInput.style.caretColor = 'transparent';
+                dictationInput.focus();
+            } else {
+                // Original microphone functionality for other modes
+                microphoneActive = false;
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {
+                    // Silently handle any errors when stopping recognition
+                }
+                startMicButton.style.color = '#FFB800';
+                startMicButton.style.borderColor = '#FFB800';
+                startMicButton.disabled = false;
+            }
+        });
+
+        // Start Mic Button Functionality
+        startMicButton.addEventListener('click', () => {
+            if (currentEffect === 'pen') {
+                showDrawingPopup();
+            } else if (currentEffect === 'new') {
+                // Reset the Free Will effect
+                textOverlay.innerHTML = `<h1 class="notes-title" contenteditable="true" spellcheck="true">Free Will</h1>
+                    <br><br>
+                    Infront of you, you should have 3 items:
+                    <br><br>
+                    A pen<br>
+                    A wallet<br>
+                    A watch
+                    <br><br>
+                    Pick up one and give it to me.`;
+                initializeFreeWill();
+            } else {
+                // Original microphone functionality
+                microphoneActive = true;
+                startMicrophoneAfterDelay();
+                startMicButton.style.color = '#666';
+                startMicButton.style.borderColor = '#666';
+                startMicButton.disabled = true;
+            }
+        });
+
+        // Settings Input Listeners
+        micDelay.addEventListener('change', () => {
+            if (microphoneActive) {
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {}
+                startMicrophoneAfterDelay();
+            }
+        });
+
+        triggerWord.addEventListener('change', () => {
+            if (microphoneActive) {
+                clearTimeout(micStartTimeout);
+                try {
+                    recognition.stop();
+                } catch (err) {}
+                startMicrophoneAfterDelay();
+            }
+        });
+
+        function startMicrophoneAfterDelay() {
+            if (!microphoneActive) return;
+            
+            const delay = parseInt(micDelay.value) * 1000;
+            micStartTimeout = setTimeout(() => {
+                if (!microphoneActive) {
+                    startMicButton.style.color = '#FFB800';
+                    startMicButton.style.borderColor = '#FFB800';
+                    startMicButton.disabled = false;
+                    return;
+                }
+                try {
+                    recognition.start();
+                } catch (err) {
+                    // Silently handle any errors when starting recognition
+                }
+            }, delay);
+        }
+
+        // Initialize with Order effect
+        switchToEffect('order');
+
+        // Free Will functionality
+        function initializeFreeWill() {
+            const textOverlay = document.getElementById('text-overlay');
+            const items = ['A pen', 'A wallet', 'A watch'];
+            let scrollCount = 0;
+            let selectedItems = [];
+            let startY = 0;
+            let startX = 0;
+
+            // Load saved messages from localStorage
+            const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
+            const secondMessage = localStorage.getItem('freewill-second') || 'Perfect. And the last item, keep in your hands.';
+            const finalTemplate = localStorage.getItem('freewill-final') || 'If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+
+            function getColumnFromX(x) {
+                const width = window.innerWidth;
+                const columnWidth = width / 3;
+                return Math.floor(x / columnWidth);
+            }
+
+            function handleSwipe(e) {
+                if (scrollCount >= 2) return; // Stop after two swipes
+
+                const touch = e.touches[0];
+                const column = getColumnFromX(touch.clientX);
+                const item = items[column];
+
+                if (!selectedItems.includes(item)) {
+                    selectedItems.push(item);
+                    scrollCount++;
+
+                    // Generate new text based on scroll count
+                    let newText = '';
+                    if (scrollCount === 1) {
+                        newText = '<br>'.repeat(100) + firstMessage + '<br>'.repeat(100);
+                    } else if (scrollCount === 2) {
+                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
+                        const finalMessage = finalTemplate
+                            .replace('[FIRST]', selectedItems[0].replace('A ', ''))
+                            .replace('[SECOND]', selectedItems[1].replace('A ', ''))
+                            .replace('[LAST]', unscrolledItem.replace('A ', ''));
+                        
+                        newText = '<br>'.repeat(100) + secondMessage +
+                                '<br>'.repeat(100) + finalMessage;
+                    }
+
+                    textOverlay.innerHTML += newText;
+                }
+            }
+
+            textOverlay.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
+            });
+
+            textOverlay.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const deltaY = touch.clientY - startY;
+                const deltaX = touch.clientX - startX;
+
+                // Only trigger if it's a vertical swipe (up)
+                if (deltaY < -50 && Math.abs(deltaX) < Math.abs(deltaY)) {
+                    handleSwipe(e);
+                }
+            });
+        }
+
+        // Save Free Will settings
+        document.getElementById('save-freewill').addEventListener('click', () => {
+            const firstMessage = document.getElementById('freewill-first').value;
+            const secondMessage = document.getElementById('freewill-second').value;
+            const finalTemplate = document.getElementById('freewill-final').value;
+
+            localStorage.setItem('freewill-first', firstMessage);
+            localStorage.setItem('freewill-second', secondMessage);
+            localStorage.setItem('freewill-final', finalTemplate);
+
+            // Show feedback
+            const saveButton = document.getElementById('save-freewill');
+            saveButton.textContent = 'Saved!';
+            setTimeout(() => {
+                saveButton.textContent = 'Save Changes';
+            }, 2000);
+        });
+
+        // Function to extract item order from speech
+        function extractItemOrder(transcript) {
+            const lowerTranscript = transcript.toLowerCase();
+            const itemOrder = [];
+            
+            Object.keys(items).forEach(item => {
+                const index = lowerTranscript.indexOf(item);
+                if (index !== -1) {
+                    itemOrder.push({
+                        item: item,
+                        index: index
+                    });
+                }
+            });
+
+            // Sort by position in transcript
+            itemOrder.sort((a, b) => a.index - b.index);
+            return itemOrder.map(item => item.item);
+        }
+
+        // Function to update the response text
+        function updateResponseText(itemOrder) {
+            const textOverlay = document.getElementById('text-overlay');
+            const template = responseTemplate.value;
+            
+            let response = template
+                .replace('[ITEM 1]', items[itemOrder[0]].replace('a ', 'the ').replace('an ', 'the '))
+                .replace('[ITEM 2]', items[itemOrder[1]].replace('a ', 'the ').replace('an ', 'the '))
+                .replace('[ITEM 3]', items[itemOrder[2]].replace('a ', 'the ').replace('an ', 'the '))
+                .replace('[ITEM 4]', items[itemOrder[3]].replace('a ', 'the ').replace('an ', 'the '));
+
+            // Split content at the last visible paragraph
+            const content = textOverlay.innerHTML.split('Place these items in any order you wish.');
+            
+            // Update the hidden paragraph with many line breaks before it
+            textOverlay.innerHTML = content[0] + 'Place these items in any order you wish.' + '<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>' + response;
+        }
+
+        // Add event listeners for drawing popup
+        document.getElementById('save-drawing').addEventListener('click', saveDrawing);
+        document.getElementById('cancel-drawing').addEventListener('click', hideDrawingPopup);
+        
+        // Add event listeners for delete popup
+        cancelDeleteBtn.addEventListener('click', hideDeletePopup);
+        confirmDeleteBtn.addEventListener('click', deleteDrawing);
+
+        // Effect switching functions
+        function switchToEffect(effect) {
+            console.log('switchToEffect called with:', effect); // Debug log
+            currentEffect = effect;
+            
+            // Hide all settings panels first
+            document.querySelectorAll('.effect-settings').forEach(panel => {
+                panel.style.display = 'none';
+            });
+
+            // Reset UI elements
+            const undoButton = document.querySelector('.circle-button:first-child');
+            const redoButton = document.querySelector('.circle-button:last-child');
+            undoButton.classList.add('disabled');
+            redoButton.classList.add('disabled');
+
+            // Set static creation time
+            document.querySelector('.creation-time').textContent = '22 March 2025 at 11:35';
+
+            // Reset canvas and text overlay visibility
+            drawingCanvas.style.display = 'none';
+            textOverlay.style.display = 'block';
+            
+            // Reset numpad and filtered words containers
+            const numpadContainer = document.getElementById('numpad-container');
+            const filteredWordsContainer = document.getElementById('filtered-words');
+            
+            if (numpadContainer) numpadContainer.style.display = 'none';
+            if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
+
+            // Effect-specific changes
+            switch(effect) {
+                case 'writing':
+                    console.log('Setting up writing effect'); // Debug log
+                    document.getElementById('other-settings').style.display = 'block';
+                    notesTitle.textContent = 'Word Filter';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
+                    
+                    // Show numpad
+                    if (numpadContainer) {
+                        currentCode = '';
+                        const numpadDisplay = document.getElementById('numpad-display');
+                        if (numpadDisplay) numpadDisplay.textContent = '';
+                        numpadContainer.style.display = 'block';
+                        
+                        // Load word list
+                        fetch('data/Long_Nouns.txt')
+                            .then(response => response.text())
+                            .then(text => {
+                                window.wordList = text.split('\n')
+                                    .map(word => word.trim())
+                                    .filter(word => word.length > 0);
+                                console.log('Word list loaded:', window.wordList.length, 'words'); // Debug log
+                            })
+                            .catch(error => console.error('Error loading word list:', error));
+                    }
+                    break;
+                    
+                case 'order':
+                    document.getElementById('order-settings').style.display = 'block';
+                    notesTitle.textContent = 'Items';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Items</h1>
+                        <br>
+                        Infront of you are 4 items:
+                        <br><br>
+                        A phone<br>
+                        A watch<br>
+                        Airpods<br>
+                        A wallet
+                        <br><br>
+                        Place these items in any order you wish.
+                        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>`;
+                    break;
+                    
+                case 'new':
+                    document.getElementById('freewill-settings').style.display = 'block';
+                    notesTitle.textContent = 'Free Will';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Free Will</h1>
+                        <br><br>
+                        Infront of you, you should have 3 items:
+                        <br><br>
+                        A pen<br>
+                        A wallet<br>
+                        A watch
+                        <br><br>
+                        Pick up one and give it to me.`;
+                    initializeFreeWill();
+                    break;
+                    
+                case 'paperclip':
+                    document.getElementById('other-settings').style.display = 'block';
+                    notesTitle.textContent = 'Billet?';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Billet?</h1>`;
+                    break;
+                    
+                case 'pen':
+                    document.getElementById('drawing-settings').style.display = 'block';
+                    notesTitle.textContent = 'Drawing';
+                    textOverlay.style.display = 'none';
+                    drawingCanvas.style.display = 'block';
+                    initializeDrawing();
+                    undoButton.classList.remove('disabled');
+                    break;
+                    
+                default:
+                    document.getElementById('other-settings').style.display = 'block';
+                    notesTitle.textContent = 'Error';
+                    textOverlay.innerHTML = `<h1 class="notes-title">Error</h1>`;
+            }
+        }
+
         // Function to load a drawing onto the canvas
         function loadDrawing(imagePath) {
             // Switch to pen effect if not already there
@@ -1501,10 +1943,18 @@
             event.target.value = '';
         });
 
+        // Letter shape categories
+        const letterShapes = {
+            straight: ['A', 'E', 'F', 'H', 'I', 'K', 'L', 'M', 'N', 'T', 'V', 'W', 'X', 'Y', 'Z'],
+            mixed: ['B', 'D', 'G', 'J', 'P', 'Q', 'R', 'U', 'W', 'Y'],
+            curved: ['C', 'G', 'J', 'O', 'Q', 'S', 'U', 'W']
+        };
+
         // Initialize numpad functionality
-        numpadDisplay = document.getElementById('numpad-display');
-        numpadContainer = document.getElementById('numpad-container');
-        filteredWordsContainer = document.getElementById('filtered-words');
+        let currentCode = '';
+        const numpadDisplay = document.getElementById('numpad-display');
+        const numpadContainer = document.getElementById('numpad-container');
+        const filteredWordsContainer = document.getElementById('filtered-words');
 
         // Add click handlers to numpad buttons
         document.querySelectorAll('.numpad-btn').forEach(button => {
@@ -1582,27 +2032,11 @@
                 return true;
             });
 
-            // Analyze letter position differences
-            let positionDifferences = new Array(length).fill(0);
-            
-            // For each position, count unique letters
-            for (let pos = 0; pos < length; pos++) {
-                const lettersAtPosition = new Set();
-                filteredWords.forEach(word => {
-                    lettersAtPosition.add(word[pos].toUpperCase());
-                });
-                positionDifferences[pos] = lettersAtPosition.size;
-            }
-
-            // Find position with maximum differences
-            const maxDifferences = Math.max(...positionDifferences);
-            const maxDiffPosition = positionDifferences.indexOf(maxDifferences) + 1; // Convert to 1-based position
-
             // Display filtered words
             const filteredWordsContainer = document.getElementById('filtered-words');
             if (filteredWordsContainer) {
                 filteredWordsContainer.innerHTML = `
-                    <div style="text-align: center; font-size: 24px; margin-bottom: 20px; color: #FFB800;">${maxDiffPosition}</div>
+                    <h2>Matching Words:</h2>
                     <div class="word-list">
                         ${filteredWords.map(word => `<div class="word">${word}</div>`).join('')}
                     </div>
