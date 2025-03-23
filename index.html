@@ -526,19 +526,19 @@
         <canvas id="drawing-canvas"></canvas>
 
         <div class="toolbar">
-            <button class="toolbar-button" id="checklist-btn" onclick="console.log('Checklist clicked'); window.switchToEffect('order');">
+            <button class="toolbar-button" id="checklist-btn">
                 <img src="./images/toolbar-checklist.PNG" alt="Checklist">
             </button>
-            <button class="toolbar-button" id="paperclip-btn" onclick="console.log('Paperclip clicked'); window.switchToEffect('paperclip');">
+            <button class="toolbar-button" id="paperclip-btn">
                 <img src="./images/toolbar-paperclip.PNG" alt="Attach">
             </button>
-            <button class="toolbar-button" id="pen-btn" onclick="console.log('Pen clicked'); window.switchToEffect('pen');">
+            <button class="toolbar-button" id="pen-btn">
                 <img src="./images/toolbar-pen.PNG" alt="Draw">
             </button>
-            <button class="toolbar-button" id="writing-btn" onclick="console.log('Writing clicked'); window.switchToEffect('writing');">
+            <button class="toolbar-button" id="writing-btn">
                 <img src="./images/toolbar-writing.PNG" alt="Writing Tools">
             </button>
-            <button class="toolbar-button" id="new-btn" onclick="console.log('New clicked'); window.switchToEffect('new');">
+            <button class="toolbar-button" id="new-btn">
                 <img src="./images/toolbar-new.PNG" alt="New Note">
             </button>
         </div>
@@ -659,6 +659,32 @@
         const drawingCanvas = document.getElementById('drawing-canvas');
         const notesTitle = document.querySelector('.notes-title');
         let currentEffect = 'order';
+
+        // Add event listeners for toolbar buttons
+        document.getElementById('checklist-btn').addEventListener('click', () => {
+            console.log('Checklist clicked');
+            switchToEffect('order');
+        });
+
+        document.getElementById('paperclip-btn').addEventListener('click', () => {
+            console.log('Paperclip clicked');
+            switchToEffect('paperclip');
+        });
+
+        document.getElementById('pen-btn').addEventListener('click', () => {
+            console.log('Pen clicked');
+            switchToEffect('pen');
+        });
+
+        document.getElementById('writing-btn').addEventListener('click', () => {
+            console.log('Writing clicked');
+            switchToEffect('writing');
+        });
+
+        document.getElementById('new-btn').addEventListener('click', () => {
+            console.log('New clicked');
+            switchToEffect('new');
+        });
 
         // Define switchToEffect function and attach it to window
         function switchToEffect(effect) {
