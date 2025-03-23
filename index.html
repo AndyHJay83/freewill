@@ -646,7 +646,35 @@
     </div>
     <div id="filtered-words"></div>
 
-    <script src="?v=3">
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Effect Button Listeners
+            const effectButtons = {
+                'checklist-btn': 'order',
+                'new-btn': 'new',
+                'paperclip-btn': 'paperclip',
+                'pen-btn': 'pen',
+                'writing-btn': 'writing'
+            };
+
+            // Add click listeners to effect buttons
+            Object.entries(effectButtons).forEach(([buttonId, effect]) => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        console.log('Button clicked:', buttonId, 'Effect:', effect); // Debug log
+                        switchToEffect(effect);
+                    });
+                } else {
+                    console.error('Button not found:', buttonId); // Debug log
+                }
+            });
+
+            // Initialize with Order effect
+            switchToEffect('order');
+        });
+
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
         const settingsPanel = document.getElementById('settings-panel');
@@ -1536,25 +1564,6 @@
                 startMicButton.style.color = '#666';
                 startMicButton.style.borderColor = '#666';
                 startMicButton.disabled = true;
-            }
-        });
-
-        // Effect Button Listeners
-        const effectButtons = {
-            'checklist-btn': 'order',
-            'new-btn': 'new',
-            'paperclip-btn': 'paperclip',
-            'pen-btn': 'pen',
-            'writing-btn': 'writing'
-        };
-
-        // Add click listeners to effect buttons
-        Object.entries(effectButtons).forEach(([buttonId, effect]) => {
-            const button = document.getElementById(buttonId);
-            if (button) {
-                button.addEventListener('click', () => {
-                    switchToEffect(effect);
-                });
             }
         });
 
