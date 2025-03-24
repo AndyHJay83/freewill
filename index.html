@@ -674,49 +674,44 @@
         }
 
         /* Android-specific styles */
-        .android-mode #app {
-            display: flex;
+        body.android-mode {
+            background-color: #202124;
+            color: #e8eaed;
+        }
+
+        body.android-mode #app {
+            display: none !important;
+        }
+
+        body.android-mode #android-ui {
+            display: flex !important;
             flex-direction: column;
             height: 100vh;
             background-color: #202124;
             color: #e8eaed;
         }
 
-        .android-mode .header {
+        body.android-mode .header {
             display: flex;
+            flex-direction: row;
             justify-content: space-between;
             align-items: center;
             padding: 16px;
             height: 56px;
+            background-color: #202124;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .android-mode .back-arrow {
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-        }
-
-        .android-mode .header-actions {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .android-mode .header-icon {
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-        }
-
-        .android-mode .note-content {
+        body.android-mode .note-content {
             flex: 1;
             padding: 16px;
             display: flex;
             flex-direction: column;
             gap: 16px;
+            background-color: #202124;
         }
 
-        .android-mode .note-title {
+        body.android-mode .note-title {
             font-size: 22px;
             font-weight: normal;
             background: transparent;
@@ -726,7 +721,7 @@
             padding: 0;
         }
 
-        .android-mode .note-body {
+        body.android-mode .note-body {
             font-size: 16px;
             background: transparent;
             border: none;
@@ -737,64 +732,48 @@
             padding: 0;
         }
 
-        .android-mode .footer {
+        body.android-mode .footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 16px;
             height: 56px;
+            background-color: #202124;
             border-top: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .android-mode .footer-left {
+        body.android-mode .footer-left {
             display: flex;
             gap: 24px;
             align-items: center;
         }
 
-        .android-mode .footer-center {
+        body.android-mode .footer-center {
             color: rgba(255, 255, 255, 0.6);
             font-size: 14px;
         }
 
-        .android-mode .footer-right {
+        body.android-mode .header-icon,
+        body.android-mode .footer-icon {
             width: 24px;
             height: 24px;
             cursor: pointer;
+            opacity: 0.87;
         }
 
-        .android-mode .footer-icon {
+        body.android-mode .back-arrow {
             width: 24px;
             height: 24px;
             cursor: pointer;
+            opacity: 0.87;
+        }
+
+        body.android-mode .header-actions {
+            display: flex;
+            gap: 24px;
+            align-items: center;
         }
     </style>
-
-    <!-- Android UI Template -->
-    <div id="android-ui" style="display: none;">
-        <div class="header">
-            <img src="assets/android/back-arrow.png" alt="Back" class="back-arrow">
-            <div class="header-actions">
-                <img src="assets/android/pin.png" alt="Pin" class="header-icon">
-                <img src="assets/android/bell.png" alt="Reminder" class="header-icon">
-                <img src="assets/android/archive.png" alt="Archive" class="header-icon">
-            </div>
-        </div>
-
-        <div class="note-content">
-            <input type="text" class="note-title" placeholder="Title">
-            <textarea class="note-body" placeholder="Note"></textarea>
-        </div>
-
-        <div class="footer">
-            <div class="footer-left">
-                <img src="assets/android/add.png" alt="Add" class="footer-icon">
-                <img src="assets/android/palette.png" alt="Color" class="footer-icon">
-            </div>
-            <div class="footer-center">Edited 15:41</div>
-            <img src="assets/android/more.png" alt="More" class="footer-icon">
-        </div>
-    </div>
 </head>
 <body>
     <div id="app">
