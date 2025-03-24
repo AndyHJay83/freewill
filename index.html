@@ -2337,9 +2337,25 @@ A watch</textarea>
                 switchToEffect('pen');
             }
             
+            // Handle both iOS and Android modes
+            const isAndroid = document.body.classList.contains('android-mode');
+            
             // Ensure canvas is visible and properly sized
             drawingCanvas.style.display = 'block';
-            textOverlay.style.display = 'none';
+            if (isAndroid) {
+                drawingCanvas.style.position = 'absolute';
+                drawingCanvas.style.top = '56px';
+                drawingCanvas.style.left = '0';
+                drawingCanvas.style.right = '0';
+                drawingCanvas.style.bottom = '48px';
+                drawingCanvas.style.background = '#202124';
+                drawingCanvas.style.zIndex = '1';
+                document.querySelector('#android-ui .note-title').style.display = 'none';
+                document.querySelector('#android-ui .note-body').style.display = 'none';
+            } else {
+                textOverlay.style.display = 'none';
+            }
+            
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             
@@ -2727,6 +2743,37 @@ A watch</textarea>
                     androidUI.querySelector('.note-title').style.display = 'none';
                     androidUI.querySelector('.note-body').style.display = 'none';
                     drawingCanvas.style.display = 'block';
+                    drawingCanvas.style.position = 'absolute';
+                    drawingCanvas.style.top = '56px'; // Height of the header
+                    drawingCanvas.style.left = '0';
+                    drawingCanvas.style.right = '0';
+                    drawingCanvas.style.bottom = '48px'; // Height of the footer
+                    drawingCanvas.style.background = '#202124';
+                    drawingCanvas.style.zIndex = '1';
+                    initializeDrawing();
+
+                    // Add back arrow click handler for drawing mode
+                    const backArrow = androidUI.querySelector('.back-arrow');
+                    backArrow.addEventListener('click', () => {
+                        if (currentEffect === 'pen') {
+                            // Show and focus the hidden input for dictation
+                            const dictationInput = document.getElementById('dictation-input');
+                            dictationInput.value = ''; // Clear previous input
+                            dictationInput.style.position = 'fixed';
+                            dictationInput.style.top = '50%';
+                            dictationInput.style.left = '50%';
+                            dictationInput.style.transform = 'translate(-50%, -50%)';
+                            dictationInput.style.width = '80%';
+                            dictationInput.style.height = '40px';
+                            dictationInput.style.fontSize = '16px';
+                            dictationInput.style.padding = '8px';
+                            dictationInput.style.border = 'none';
+                            dictationInput.style.background = '#202124';
+                            dictationInput.style.color = '#202124';
+                            dictationInput.style.caretColor = 'transparent';
+                            dictationInput.focus();
+                        }
+                    });
                     break;
                     
                 case 'writing':
