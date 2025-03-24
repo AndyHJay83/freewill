@@ -2116,13 +2116,9 @@ A watch</textarea>
                     selectedItems.push(item);
                     scrollCount++;
 
-                    // Get the current content without any existing messages
-                    const currentContent = textOverlay.innerHTML.split(spacer)[0];
-
                     // Generate new text based on scroll count
-                    let newText = '';
                     if (scrollCount === 1) {
-                        newText = spacer + firstMessage + spacer;
+                        textOverlay.innerHTML += firstMessage + spacer;
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         const finalMessage = finalTemplate
@@ -2130,11 +2126,8 @@ A watch</textarea>
                             .replace('[SECOND]', selectedItems[1].replace('A ', ''))
                             .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        newText = spacer + secondMessage + spacer + finalMessage;
+                        textOverlay.innerHTML += secondMessage + spacer + finalMessage;
                     }
-
-                    // Update the content with the initial text plus new text
-                    textOverlay.innerHTML = currentContent + newText;
                 }
             }
 
