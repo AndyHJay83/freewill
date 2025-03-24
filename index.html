@@ -737,9 +737,19 @@
 
         body.android-mode .note-content.free-will-mode .note-title,
         body.android-mode .note-content.free-will-mode .note-body {
-            position: absolute;
-            width: calc(100% - 32px);
-            transform: translateY(0);
+            position: relative;
+            width: 100%;
+            transform: none;
+        }
+
+        body.android-mode .note-content.free-will-mode .note-title {
+            margin-bottom: 16px;
+        }
+
+        body.android-mode .note-content.free-will-mode .note-body {
+            white-space: pre-wrap;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         body.android-mode .footer {
@@ -2756,6 +2766,7 @@ Pick up one and give it to me.`;
 
             // Initial content with spacing
             const spacer = '\n'.repeat(100);
+            noteTitle.value = 'Free Will';
             noteBody.value = `Infront of you, you should have 3 items:
 
 A pen
@@ -2771,10 +2782,8 @@ Pick up one and give it to me.${spacer}`;
             }
 
             function updateText(newText) {
-                // Add the new text after spacing, preserving scroll position
-                const currentScroll = noteContent.scrollTop;
+                // Add the new text after spacing
                 noteBody.value = noteBody.value + newText + spacer;
-                noteContent.scrollTop = currentScroll;
             }
 
             function handleSwipe(touchX) {
