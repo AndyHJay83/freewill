@@ -779,6 +779,47 @@
             gap: 24px;
             align-items: center;
         }
+
+        body.android-mode #drawing-canvas {
+            position: absolute;
+            top: 56px; /* Height of the header */
+            left: 0;
+            right: 0;
+            bottom: 48px; /* Height of the footer */
+            background: #202124;
+            z-index: 1;
+        }
+
+        body.android-mode .numpad-container {
+            background: rgba(32, 33, 36, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        body.android-mode #filtered-words {
+            background: rgba(32, 33, 36, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        body.android-mode .settings-panel {
+            background: #202124;
+        }
+
+        body.android-mode .drawing-popup {
+            background: #202124;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        body.android-mode .delete-popup {
+            background: #202124;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* Update Android UI note content area */
+        body.android-mode .note-content {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -2570,8 +2611,117 @@
                 
                 if (androidTitle) androidTitle.value = iosTitle;
                 if (androidBody) androidBody.value = iosContent;
+
+                // Initialize Android UI handlers
+                initializeAndroidHandlers();
             }
         });
+
+        // Function to initialize Android UI handlers
+        function initializeAndroidHandlers() {
+            const androidUI = document.querySelector('#android-ui');
+            if (!androidUI) return;
+
+            // Effect triggers
+            androidUI.querySelector('.footer img[alt="Color"]').addEventListener('click', () => {
+                switchToEffect('pen');
+                updateAndroidUIForEffect('pen');
+            });
+
+            androidUI.querySelector('.footer img[alt="Add"]').addEventListener('click', () => {
+                switchToEffect('writing');
+                updateAndroidUIForEffect('writing');
+            });
+
+            androidUI.querySelector('.footer img[alt="More"]').addEventListener('click', () => {
+                switchToEffect('new');
+                updateAndroidUIForEffect('new');
+            });
+
+            androidUI.querySelector('.footer-center').addEventListener('click', () => {
+                switchToEffect('order');
+                updateAndroidUIForEffect('order');
+            });
+
+            // Settings trigger
+            androidUI.querySelector('.header img[alt="Pin"]').addEventListener('click', () => {
+                document.getElementById('settings-panel').classList.add('active');
+            });
+
+            // Order mode specific handlers
+            androidUI.querySelector('.header img[alt="Back"]').addEventListener('click', () => {
+                if (currentEffect === 'order') {
+                    microphoneActive = false;
+                    clearTimeout(micStartTimeout);
+                    try {
+                        recognition.stop();
+                    } catch (err) {}
+                }
+            });
+
+            androidUI.querySelector('.header img[alt="Reminder"]').addEventListener('click', () => {
+                if (currentEffect === 'order') {
+                    microphoneActive = true;
+                    startMicrophoneAfterDelay();
+                }
+            });
+        }
+
+        // Function to update Android UI based on current effect
+        function updateAndroidUIForEffect(effect) {
+            const androidUI = document.querySelector('#android-ui');
+            if (!androidUI) return;
+
+            // Reset all UI elements
+            androidUI.querySelector('.note-title').style.display = 'block';
+            androidUI.querySelector('.note-body').style.display = 'block';
+            androidUI.querySelector('.footer').style.display = 'flex';
+            
+            // Effect-specific UI updates
+            switch(effect) {
+                case 'pen':
+                    // Show canvas, hide text inputs
+                    androidUI.querySelector('.note-title').style.display = 'none';
+                    androidUI.querySelector('.note-body').style.display = 'none';
+                    drawingCanvas.style.display = 'block';
+                    break;
+                    
+                case 'writing':
+                    // Show numpad
+                    if (numpadContainer) {
+                        currentCode = '';
+                        const numpadDisplay = document.getElementById('numpad-display');
+                        if (numpadDisplay) numpadDisplay.textContent = '';
+                        numpadContainer.style.display = 'block';
+                    }
+                    break;
+                    
+                case 'order':
+                    // Update content for order effect
+                    androidUI.querySelector('.note-title').value = 'Items';
+                    androidUI.querySelector('.note-body').value = `Infront of you are 4 items:
+
+A phone
+A watch
+Airpods
+A wallet
+
+Place these items in any order you wish.`;
+                    break;
+                    
+                case 'new':
+                    // Update content for Free Will effect
+                    androidUI.querySelector('.note-title').value = 'Free Will';
+                    androidUI.querySelector('.note-body').value = `Infront of you, you should have 3 items:
+
+A pen
+A wallet
+A watch
+
+Pick up one and give it to me.`;
+                    break;
+            }
+        }
 
         // Initialize platform on page load
         document.addEventListener('DOMContentLoaded', function() {
