@@ -2804,8 +2804,10 @@ Pick up one and give it to me.${spacer}`;
             }
 
             function updateText(newText) {
-                // Add the new text after spacing
-                noteBody.value = noteBody.value + newText + spacer;
+                // Get the current content without the spacer
+                const currentContent = noteBody.value.split(spacer)[0];
+                // Add the new text with spacing
+                noteBody.value = currentContent + spacer + newText;
             }
 
             function handleSwipe(touchX) {
