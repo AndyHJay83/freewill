@@ -2730,7 +2730,9 @@ A watch</textarea>
                     break;
                     
                 case 'writing':
-                    // Show numpad
+                    // Show numpad and set correct title/content
+                    androidUI.querySelector('.note-title').value = 'Word Filter';
+                    androidUI.querySelector('.note-body').value = '';
                     if (numpadContainer) {
                         currentCode = '';
                         const numpadDisplay = document.getElementById('numpad-display');
