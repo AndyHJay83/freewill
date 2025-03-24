@@ -2095,9 +2095,7 @@ A watch</textarea>
                 <br><br>
                 Infront of you, you should have 3 items:
                 <br><br>
-                A pen<br>
-                A wallet<br>
-                A watch
+                ${items.join('<br>')}
                 <br><br>
                 Pick up one and give it to me.${spacer}`;
 
@@ -2118,6 +2116,9 @@ A watch</textarea>
                     selectedItems.push(item);
                     scrollCount++;
 
+                    // Get the current content without any existing messages
+                    const currentContent = textOverlay.innerHTML.split(spacer)[0];
+
                     // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
@@ -2132,8 +2133,8 @@ A watch</textarea>
                         newText = spacer + secondMessage + spacer + finalMessage;
                     }
 
-                    // Add the new text to the content
-                    textOverlay.innerHTML += newText;
+                    // Update the content with the initial text plus new text
+                    textOverlay.innerHTML = currentContent + newText;
                 }
             }
 
