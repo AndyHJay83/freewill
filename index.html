@@ -2777,8 +2777,7 @@ Pick up one and give it to me.`;
             let scrollCount = 0;
             let selectedItems = [];
             let startY = 0;
-            let currentY = 0;
-            let isScrolling = false;
+            let startX = 0;
             let lastScrollTop = 0;
 
             // Load saved messages from localStorage
@@ -2803,29 +2802,21 @@ Pick up one and give it to me.${spacer}`;
                 return Math.floor(x / columnWidth);
             }
 
-            function updateText(newText) {
-                // Get the current content without the spacer
-                const currentContent = noteBody.value.split(spacer)[0];
-                // Add the new text with spacing
-                noteBody.value = currentContent + spacer + newText;
-                // Force a reflow to ensure the content is updated
-                noteBody.style.display = 'none';
-                noteBody.offsetHeight; // Force reflow
-                noteBody.style.display = 'block';
-            }
-
-            function handleSwipe(touchX) {
+            function handleSwipe(e) {
                 if (scrollCount >= 2) return;
 
-                const column = getColumnFromX(touchX);
+                const touch = e.touches[0];
+                const column = getColumnFromX(touch.clientX);
                 const item = items[column];
 
                 if (!selectedItems.includes(item)) {
                     selectedItems.push(item);
                     scrollCount++;
 
+                    // Generate new text based on scroll count
+                    let newText = '';
                     if (scrollCount === 1) {
-                        updateText(firstMessage);
+                        newText = spacer + firstMessage + spacer;
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         const finalMessage = finalTemplate
@@ -2833,65 +2824,36 @@ Pick up one and give it to me.${spacer}`;
                             .replace('[SECOND]', selectedItems[1].replace('A ', ''))
                             .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        updateText(secondMessage + '\n\n' + finalMessage);
+                        newText = spacer + secondMessage + spacer + finalMessage;
                     }
+
+                    // Add the new text to the content
+                    noteBody.value += newText;
                 }
             }
 
-            // Remove any existing listeners
-            noteContent.removeEventListener('touchstart', onTouchStart);
-            noteContent.removeEventListener('touchmove', onTouchMove);
-            noteContent.removeEventListener('touchend', onTouchEnd);
-            noteContent.removeEventListener('scroll', onScroll);
-
-            function onTouchStart(e) {
-                startY = e.touches[0].clientY;
-                currentY = startY;
-                isScrolling = false;
-            }
-
-            function onTouchMove(e) {
-                currentY = e.touches[0].clientY;
-                const deltaY = currentY - startY;
-
-                // Check if we're scrolling or swiping
-                if (!isScrolling) {
-                    if (Math.abs(deltaY) > 10) {
-                        isScrolling = true;
-                    }
-                }
-
-                // If we're scrolling, don't prevent default
-                if (isScrolling) {
-                    return;
-                }
-
-                // Only handle significant upward movement for swipe
-                if (deltaY < -50) {
-                    e.preventDefault();
-                    const touchX = e.touches[0].clientX;
-                    handleSwipe(touchX);
-                    startY = currentY;
-                }
-            }
-
-            function onTouchEnd() {
-                startY = 0;
-                currentY = 0;
-                isScrolling = false;
-            }
-
-            function onScroll() {
+            // Track scroll position
+            noteContent.addEventListener('scroll', () => {
                 const currentScrollTop = noteContent.scrollTop;
                 const scrollDelta = currentScrollTop - lastScrollTop;
                 lastScrollTop = currentScrollTop;
-            }
+            });
 
-            // Add new touch event listeners
-            noteContent.addEventListener('touchstart', onTouchStart);
-            noteContent.addEventListener('touchmove', onTouchMove);
-            noteContent.addEventListener('touchend', onTouchEnd);
-            noteContent.addEventListener('scroll', onScroll);
+            noteContent.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                startX = e.touches[0].clientX;
+            });
+
+            noteContent.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const deltaY = touch.clientY - startY;
+                const deltaX = touch.clientX - startX;
+
+                // Only trigger if it's a vertical swipe (up)
+                if (deltaY < -50 && Math.abs(deltaX) < Math.abs(deltaY)) {
+                    handleSwipe(e);
+                }
+            });
 
             // Enable scrolling on note content
             noteContent.style.overflowY = 'auto';
