@@ -709,9 +709,16 @@
             flex-direction: column;
             gap: 16px;
             background-color: #202124;
+            overflow-y: auto;
+            position: relative;
         }
 
-        body.android-mode .note-title {
+        body.android-mode .note-content.free-will-mode {
+            overflow-y: hidden;
+        }
+
+        body.android-mode .note-title,
+        body.android-mode .note-body {
             font-size: 22px;
             font-weight: normal;
             background: transparent;
@@ -719,17 +726,20 @@
             color: #e8eaed;
             width: 100%;
             padding: 0;
+            transition: transform 0.3s ease;
         }
 
         body.android-mode .note-body {
             font-size: 16px;
-            background: transparent;
-            border: none;
-            color: #e8eaed;
-            width: 100%;
             flex: 1;
             resize: none;
-            padding: 0;
+        }
+
+        body.android-mode .note-content.free-will-mode .note-title,
+        body.android-mode .note-content.free-will-mode .note-body {
+            position: absolute;
+            width: calc(100% - 32px);
+            transform: translateY(0);
         }
 
         body.android-mode .footer {
@@ -2672,10 +2682,13 @@
             const androidUI = document.querySelector('#android-ui');
             if (!androidUI) return;
 
+            const noteContent = androidUI.querySelector('.note-content');
+            
             // Reset all UI elements
             androidUI.querySelector('.note-title').style.display = 'block';
             androidUI.querySelector('.note-body').style.display = 'block';
             androidUI.querySelector('.footer').style.display = 'flex';
+            noteContent.classList.remove('free-will-mode');
             
             // Effect-specific UI updates
             switch(effect) {
@@ -2711,6 +2724,7 @@ Place these items in any order you wish.`;
                     
                 case 'new':
                     // Update content for Free Will effect
+                    noteContent.classList.add('free-will-mode');
                     androidUI.querySelector('.note-title').value = 'Free Will';
                     androidUI.querySelector('.note-body').value = `Infront of you, you should have 3 items:
 
@@ -2719,8 +2733,92 @@ A wallet
 A watch
 
 Pick up one and give it to me.`;
+                    initializeAndroidFreeWill(androidUI);
                     break;
             }
+        }
+
+        // Function to initialize Free Will mode for Android UI
+        function initializeAndroidFreeWill(androidUI) {
+            const noteContent = androidUI.querySelector('.note-content');
+            const noteTitle = androidUI.querySelector('.note-title');
+            const noteBody = androidUI.querySelector('.note-body');
+            const items = ['A pen', 'A wallet', 'A watch'];
+            let scrollCount = 0;
+            let selectedItems = [];
+            let startY = 0;
+            let currentY = 0;
+
+            // Load saved messages from localStorage
+            const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
+            const secondMessage = localStorage.getItem('freewill-second') || 'Perfect. And the last item, keep in your hands.';
+            const finalTemplate = localStorage.getItem('freewill-final') || 'If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+
+            function getColumnFromX(x) {
+                const width = window.innerWidth;
+                const columnWidth = width / 3;
+                return Math.floor(x / columnWidth);
+            }
+
+            function handleSwipe(touchX) {
+                if (scrollCount >= 2) return; // Stop after two swipes
+
+                const column = getColumnFromX(touchX);
+                const item = items[column];
+
+                if (!selectedItems.includes(item)) {
+                    selectedItems.push(item);
+                    scrollCount++;
+
+                    // Generate new text based on scroll count
+                    if (scrollCount === 1) {
+                        noteTitle.value = 'Free Will';
+                        noteBody.value = firstMessage;
+                    } else if (scrollCount === 2) {
+                        const unscrolledItem = items.find(item => !selectedItems.includes(item));
+                        const finalMessage = finalTemplate
+                            .replace('[FIRST]', selectedItems[0].replace('A ', ''))
+                            .replace('[SECOND]', selectedItems[1].replace('A ', ''))
+                            .replace('[LAST]', unscrolledItem.replace('A ', ''));
+                        
+                        noteTitle.value = 'Free Will';
+                        noteBody.value = secondMessage + '\n\n' + finalMessage;
+                    }
+                }
+            }
+
+            // Remove any existing listeners
+            noteContent.removeEventListener('touchstart', onTouchStart);
+            noteContent.removeEventListener('touchmove', onTouchMove);
+            noteContent.removeEventListener('touchend', onTouchEnd);
+
+            function onTouchStart(e) {
+                startY = e.touches[0].clientY;
+                currentY = startY;
+            }
+
+            function onTouchMove(e) {
+                e.preventDefault();
+                currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                // Only handle significant vertical movement
+                if (Math.abs(deltaY) > 50) {
+                    const touchX = e.touches[0].clientX;
+                    handleSwipe(touchX);
+                    startY = currentY; // Reset start position
+                }
+            }
+
+            function onTouchEnd() {
+                startY = 0;
+                currentY = 0;
+            }
+
+            // Add new touch event listeners
+            noteContent.addEventListener('touchstart', onTouchStart);
+            noteContent.addEventListener('touchmove', onTouchMove);
+            noteContent.addEventListener('touchend', onTouchEnd);
         }
 
         // Initialize platform on page load
