@@ -2754,14 +2754,31 @@ Pick up one and give it to me.`;
             const secondMessage = localStorage.getItem('freewill-second') || 'Perfect. And the last item, keep in your hands.';
             const finalTemplate = localStorage.getItem('freewill-final') || 'If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
 
+            // Initial content with spacing
+            const spacer = '\n'.repeat(100);
+            noteBody.value = `Infront of you, you should have 3 items:
+
+A pen
+A wallet
+A watch
+
+Pick up one and give it to me.${spacer}`;
+
             function getColumnFromX(x) {
                 const width = window.innerWidth;
                 const columnWidth = width / 3;
                 return Math.floor(x / columnWidth);
             }
 
+            function updateText(newText) {
+                // Add the new text after spacing, preserving scroll position
+                const currentScroll = noteContent.scrollTop;
+                noteBody.value = noteBody.value + newText + spacer;
+                noteContent.scrollTop = currentScroll;
+            }
+
             function handleSwipe(touchX) {
-                if (scrollCount >= 2) return; // Stop after two swipes
+                if (scrollCount >= 2) return;
 
                 const column = getColumnFromX(touchX);
                 const item = items[column];
@@ -2770,10 +2787,8 @@ Pick up one and give it to me.`;
                     selectedItems.push(item);
                     scrollCount++;
 
-                    // Generate new text based on scroll count
                     if (scrollCount === 1) {
-                        noteTitle.value = 'Free Will';
-                        noteBody.value = firstMessage;
+                        updateText(firstMessage);
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         const finalMessage = finalTemplate
@@ -2781,8 +2796,7 @@ Pick up one and give it to me.`;
                             .replace('[SECOND]', selectedItems[1].replace('A ', ''))
                             .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        noteTitle.value = 'Free Will';
-                        noteBody.value = secondMessage + '\n\n' + finalMessage;
+                        updateText(secondMessage + '\n\n' + finalMessage);
                     }
                 }
             }
@@ -2802,11 +2816,11 @@ Pick up one and give it to me.`;
                 currentY = e.touches[0].clientY;
                 const deltaY = currentY - startY;
 
-                // Only handle significant vertical movement
-                if (Math.abs(deltaY) > 50) {
+                // Only handle significant upward movement
+                if (deltaY < -50) {
                     const touchX = e.touches[0].clientX;
                     handleSwipe(touchX);
-                    startY = currentY; // Reset start position
+                    startY = currentY;
                 }
             }
 
@@ -2819,6 +2833,10 @@ Pick up one and give it to me.`;
             noteContent.addEventListener('touchstart', onTouchStart);
             noteContent.addEventListener('touchmove', onTouchMove);
             noteContent.addEventListener('touchend', onTouchEnd);
+
+            // Enable scrolling on note content
+            noteContent.style.overflowY = 'auto';
+            noteContent.style.WebkitOverflowScrolling = 'touch';
         }
 
         // Initialize platform on page load
