@@ -2779,6 +2779,7 @@ Pick up one and give it to me.`;
             let startY = 0;
             let currentY = 0;
             let isScrolling = false;
+            let lastScrollTop = 0;
 
             // Load saved messages from localStorage
             const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
@@ -2835,6 +2836,7 @@ Pick up one and give it to me.${spacer}`;
             noteContent.removeEventListener('touchstart', onTouchStart);
             noteContent.removeEventListener('touchmove', onTouchMove);
             noteContent.removeEventListener('touchend', onTouchEnd);
+            noteContent.removeEventListener('scroll', onScroll);
 
             function onTouchStart(e) {
                 startY = e.touches[0].clientY;
@@ -2873,16 +2875,26 @@ Pick up one and give it to me.${spacer}`;
                 isScrolling = false;
             }
 
+            function onScroll() {
+                const currentScrollTop = noteContent.scrollTop;
+                const scrollDelta = currentScrollTop - lastScrollTop;
+                lastScrollTop = currentScrollTop;
+            }
+
             // Add new touch event listeners
             noteContent.addEventListener('touchstart', onTouchStart);
             noteContent.addEventListener('touchmove', onTouchMove);
             noteContent.addEventListener('touchend', onTouchEnd);
+            noteContent.addEventListener('scroll', onScroll);
 
             // Enable scrolling on note content
             noteContent.style.overflowY = 'auto';
             noteContent.style.WebkitOverflowScrolling = 'touch';
             noteContent.style.height = '100%';
             noteContent.style.position = 'relative';
+            noteBody.style.whiteSpace = 'pre-wrap';
+            noteBody.style.overflowY = 'auto';
+            noteBody.style.WebkitOverflowScrolling = 'touch';
         }
 
         // Initialize platform on page load
