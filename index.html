@@ -2808,6 +2808,10 @@ Pick up one and give it to me.${spacer}`;
                 const currentContent = noteBody.value.split(spacer)[0];
                 // Add the new text with spacing
                 noteBody.value = currentContent + spacer + newText;
+                // Force a reflow to ensure the content is updated
+                noteBody.style.display = 'none';
+                noteBody.offsetHeight; // Force reflow
+                noteBody.style.display = 'block';
             }
 
             function handleSwipe(touchX) {
@@ -2897,6 +2901,8 @@ Pick up one and give it to me.${spacer}`;
             noteBody.style.whiteSpace = 'pre-wrap';
             noteBody.style.overflowY = 'auto';
             noteBody.style.WebkitOverflowScrolling = 'touch';
+            noteBody.style.height = '100%';
+            noteBody.style.position = 'relative';
         }
 
         // Initialize platform on page load
