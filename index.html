@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" id="status-bar-style-meta">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#000000" id="theme-color-meta">
     <meta name="apple-mobile-web-app-title" content="Nötes">
     
@@ -2537,14 +2537,10 @@
             // Toggle Android mode class on body
             document.body.classList.toggle('android-mode', !isIOS);
             
-            // Update theme-color and status bar meta tags
+            // Update theme-color meta tag
             const themeColorMeta = document.getElementById('theme-color-meta');
-            const statusBarStyleMeta = document.getElementById('status-bar-style-meta');
             if (themeColorMeta) {
                 themeColorMeta.content = isIOS ? '#000000' : '#202124';
-            }
-            if (statusBarStyleMeta) {
-                statusBarStyleMeta.content = isIOS ? 'black' : 'default';
             }
             
             // Save preference
@@ -2576,17 +2572,17 @@
             const savedPlatform = localStorage.getItem('platform');
             const platformToggle = document.getElementById('platform-toggle');
             
-            // Set initial theme colors based on saved platform
+            // Set initial theme color based on saved platform
             const themeColorMeta = document.getElementById('theme-color-meta');
-            const statusBarStyleMeta = document.getElementById('status-bar-style-meta');
             if (themeColorMeta) {
                 themeColorMeta.content = (savedPlatform === 'android') ? '#202124' : '#000000';
             }
-            if (statusBarStyleMeta) {
-                statusBarStyleMeta.content = (savedPlatform === 'android') ? 'default' : 'black';
-            }
             
             if (savedPlatform === 'android' && platformToggle) {
+                platformToggle.checked = false;
+                platformToggle.dispatchEvent(new Event('change'));
+            }
+            
             // Ensure initial visibility is correct
             const isIOS = platformToggle ? platformToggle.checked : true;
             document.querySelector('#app').style.display = isIOS ? 'flex' : 'none';
