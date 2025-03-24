@@ -966,6 +966,12 @@
         <!-- Free Will Effect Settings -->
         <div class="effect-settings" id="freewill-settings">
             <div class="settings-group">
+                <div class="settings-label">Items (one per line)</div>
+                <textarea class="settings-input settings-textarea" id="freewill-items">A pen
+A wallet
+A watch</textarea>
+            </div>
+            <div class="settings-group">
                 <div class="settings-label">First Message</div>
                 <textarea class="settings-input settings-textarea" id="freewill-first">Great. Now pick up another item and put it in your pocket.</textarea>
             </div>
@@ -2071,7 +2077,7 @@
         // Free Will functionality
         function initializeFreeWill() {
             const textOverlay = document.getElementById('text-overlay');
-            const items = ['A pen', 'A wallet', 'A watch'];
+            const items = JSON.parse(localStorage.getItem('freewill-items')) || ['A pen', 'A wallet', 'A watch'];
             let scrollCount = 0;
             let selectedItems = [];
             let startY = 0;
@@ -2157,10 +2163,12 @@
 
         // Save Free Will settings
         document.getElementById('save-freewill').addEventListener('click', () => {
+            const items = document.getElementById('freewill-items').value.split('\n').filter(item => item.trim());
             const firstMessage = document.getElementById('freewill-first').value;
             const secondMessage = document.getElementById('freewill-second').value;
             const finalTemplate = document.getElementById('freewill-final').value;
 
+            localStorage.setItem('freewill-items', JSON.stringify(items));
             localStorage.setItem('freewill-first', firstMessage);
             localStorage.setItem('freewill-second', secondMessage);
             localStorage.setItem('freewill-final', finalTemplate);
@@ -2773,7 +2781,7 @@ Pick up one and give it to me.`;
             const noteContent = androidUI.querySelector('.note-content');
             const noteTitle = androidUI.querySelector('.note-title');
             const noteBody = androidUI.querySelector('.note-body');
-            const items = ['A pen', 'A wallet', 'A watch'];
+            const items = JSON.parse(localStorage.getItem('freewill-items')) || ['A pen', 'A wallet', 'A watch'];
             let scrollCount = 0;
             let selectedItems = [];
             let startY = 0;
