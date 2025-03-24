@@ -2758,6 +2758,7 @@ Pick up one and give it to me.`;
             let selectedItems = [];
             let startY = 0;
             let currentY = 0;
+            let isScrolling = false;
 
             // Load saved messages from localStorage
             const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
@@ -2818,15 +2819,28 @@ Pick up one and give it to me.${spacer}`;
             function onTouchStart(e) {
                 startY = e.touches[0].clientY;
                 currentY = startY;
+                isScrolling = false;
             }
 
             function onTouchMove(e) {
-                e.preventDefault();
                 currentY = e.touches[0].clientY;
                 const deltaY = currentY - startY;
 
-                // Only handle significant upward movement
+                // Check if we're scrolling or swiping
+                if (!isScrolling) {
+                    if (Math.abs(deltaY) > 10) {
+                        isScrolling = true;
+                    }
+                }
+
+                // If we're scrolling, don't prevent default
+                if (isScrolling) {
+                    return;
+                }
+
+                // Only handle significant upward movement for swipe
                 if (deltaY < -50) {
+                    e.preventDefault();
                     const touchX = e.touches[0].clientX;
                     handleSwipe(touchX);
                     startY = currentY;
@@ -2836,6 +2850,7 @@ Pick up one and give it to me.${spacer}`;
             function onTouchEnd() {
                 startY = 0;
                 currentY = 0;
+                isScrolling = false;
             }
 
             // Add new touch event listeners
@@ -2846,6 +2861,8 @@ Pick up one and give it to me.${spacer}`;
             // Enable scrolling on note content
             noteContent.style.overflowY = 'auto';
             noteContent.style.WebkitOverflowScrolling = 'touch';
+            noteContent.style.height = '100%';
+            noteContent.style.position = 'relative';
         }
 
         // Initialize platform on page load
