@@ -2076,11 +2076,24 @@
             let selectedItems = [];
             let startY = 0;
             let startX = 0;
+            let lastScrollTop = 0;
 
             // Load saved messages from localStorage
             const firstMessage = localStorage.getItem('freewill-first') || 'Great. Now pick up another item and put it in your pocket.';
             const secondMessage = localStorage.getItem('freewill-second') || 'Perfect. And the last item, keep in your hands.';
             const finalTemplate = localStorage.getItem('freewill-final') || 'If I have influenced you correctly, I should be holding the [FIRST], you should be holding the [LAST], and the [SECOND] should be in your pocket!';
+
+            // Initial content with spacing
+            const spacer = '<br>'.repeat(100);
+            textOverlay.innerHTML = `<h1 class="notes-title">Free Will</h1>
+                <br><br>
+                Infront of you, you should have 3 items:
+                <br><br>
+                A pen<br>
+                A wallet<br>
+                A watch
+                <br><br>
+                Pick up one and give it to me.${spacer}`;
 
             function getColumnFromX(x) {
                 const width = window.innerWidth;
@@ -2089,7 +2102,7 @@
             }
 
             function handleSwipe(e) {
-                if (scrollCount >= 2) return; // Stop after two swipes
+                if (scrollCount >= 2) return;
 
                 const touch = e.touches[0];
                 const column = getColumnFromX(touch.clientX);
@@ -2102,7 +2115,7 @@
                     // Generate new text based on scroll count
                     let newText = '';
                     if (scrollCount === 1) {
-                        newText = '<br>'.repeat(100) + firstMessage + '<br>'.repeat(100);
+                        newText = spacer + firstMessage + spacer;
                     } else if (scrollCount === 2) {
                         const unscrolledItem = items.find(item => !selectedItems.includes(item));
                         const finalMessage = finalTemplate
@@ -2110,13 +2123,20 @@
                             .replace('[SECOND]', selectedItems[1].replace('A ', ''))
                             .replace('[LAST]', unscrolledItem.replace('A ', ''));
                         
-                        newText = '<br>'.repeat(100) + secondMessage +
-                                '<br>'.repeat(100) + finalMessage;
+                        newText = spacer + secondMessage + spacer + finalMessage;
                     }
 
+                    // Add the new text to the content
                     textOverlay.innerHTML += newText;
                 }
             }
+
+            // Track scroll position
+            textOverlay.addEventListener('scroll', () => {
+                const currentScrollTop = textOverlay.scrollTop;
+                const scrollDelta = currentScrollTop - lastScrollTop;
+                lastScrollTop = currentScrollTop;
+            });
 
             textOverlay.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
