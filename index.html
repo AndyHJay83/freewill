@@ -737,26 +737,30 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px;
-            height: 56px;
+            height: 48px; /* Reduced from 56px */
             background-color: #202124;
             border-top: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 8px; /* Add some bottom margin */
         }
 
         body.android-mode .footer-left {
             display: flex;
-            gap: 24px;
+            gap: 20px; /* Reduced from 24px */
             align-items: center;
         }
 
         body.android-mode .footer-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
+            font-size: 13px; /* Reduced from 14px */
         }
 
         body.android-mode .header-icon,
         body.android-mode .footer-icon {
-            width: 24px;
-            height: 24px;
+            width: 22px; /* Reduced from 24px */
+            height: 22px; /* Reduced from 24px */
             cursor: pointer;
             opacity: 0.87;
         }
