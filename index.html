@@ -1086,9 +1086,32 @@ A watch</textarea>
             });
         }
 
-        // ... existing code ...
-        function initializeEffectSwitching() {
-            // iOS Effect Button Listeners
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            // ... rest of the existing DOMContentLoaded code ...
+
+            // Add double-click handlers for undo/redo buttons
+            const undoButton = document.querySelector('.circle-button:first-child');
+            const redoButton = document.querySelector('.circle-button:last-child');
+
+            [undoButton, redoButton].forEach(button => {
+                button.addEventListener('dblclick', () => {
+                    if (currentEffect === 'writing') {
+                        // Reset the Writing effect
+                        currentCode = '';
+                        const numpadDisplay = document.getElementById('numpad-display');
+                        const numpadContainer = document.getElementById('numpad-container');
+                        const filteredWordsContainer = document.getElementById('filtered-words');
+                        
+                        if (numpadDisplay) numpadDisplay.textContent = '';
+                        if (numpadContainer) numpadContainer.style.display = 'block';
+                        if (filteredWordsContainer) filteredWordsContainer.style.display = 'none';
+                    }
+                });
+            });
+
+            // Effect Button Listeners
             const effectButtons = {
                 'checklist-btn': 'order',
                 'new-btn': 'new',
@@ -1097,93 +1120,23 @@ A watch</textarea>
                 'writing-btn': 'writing'
             };
 
+            // Add click listeners to effect buttons
             Object.entries(effectButtons).forEach(([buttonId, effect]) => {
                 const button = document.getElementById(buttonId);
                 if (button) {
                     button.addEventListener('click', () => {
+                        console.log('Button clicked:', buttonId, 'Effect:', effect); // Debug log
                         switchToEffect(effect);
-                        if (document.body.classList.contains('android-mode')) {
-                            updateAndroidUIForEffect(effect);
-                        }
                     });
+                } else {
+                    console.error('Button not found:', buttonId); // Debug log
                 }
             });
 
-            // Android Effect Button Listeners
-            const androidUI = document.querySelector('#android-ui');
-            if (androidUI) {
-                const androidButtons = {
-                    'Color': 'pen',
-                    'Add': 'writing',
-                    'More': 'new'
-                };
-
-                Object.entries(androidButtons).forEach(([alt, effect]) => {
-                    const button = androidUI.querySelector(`.footer img[alt="${alt}"]`);
-                    if (button) {
-                        button.addEventListener('click', () => {
-                            switchToEffect(effect);
-                            updateAndroidUIForEffect(effect);
-                        });
-                    }
-                });
-
-                // Footer center (Order mode)
-                const footerCenter = androidUI.querySelector('.footer-center');
-                if (footerCenter) {
-                    footerCenter.addEventListener('click', () => {
-                        switchToEffect('order');
-                        updateAndroidUIForEffect('order');
-                    });
-                }
-            }
-        }
-
-        // Call initialization when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeTheme();
-            initializeEffectSwitching();
-            
             // Initialize with Order effect
             switchToEffect('order');
-            if (document.body.classList.contains('android-mode')) {
-                updateAndroidUIForEffect('order');
-            }
         });
 
-        // ... existing code ...
-        // Update platform toggle to reinitialize effect switching
-        document.getElementById('platform-toggle').addEventListener('change', (e) => {
-            const isIOS = e.target.checked;
-            const currentEffectBeforeSwitch = currentEffect;
-            
-            // Toggle Android mode class on body
-            document.body.classList.toggle('android-mode', !isIOS);
-            
-            // Update theme-color meta tag
-            const themeColorMeta = document.getElementById('theme-color-meta');
-            if (themeColorMeta) {
-                themeColorMeta.content = isIOS ? '#000000' : '#202124';
-            }
-            
-            // Save preference
-            localStorage.setItem('platform', isIOS ? 'ios' : 'android');
-            
-            // Switch UI visibility
-            document.querySelector('#app').style.display = isIOS ? 'flex' : 'none';
-            document.querySelector('#android-ui').style.display = isIOS ? 'none' : 'flex';
-            
-            // Reinitialize effect switching
-            initializeEffectSwitching();
-            
-            // Maintain current effect after platform switch
-            switchToEffect(currentEffectBeforeSwitch);
-            if (!isIOS) {
-                updateAndroidUIForEffect(currentEffectBeforeSwitch);
-            }
-        });
-
-        // ... existing code ...
         // Settings Panel Functionality
         const settingsButton = document.getElementById('settings-button');
         const settingsPanel = document.getElementById('settings-panel');
@@ -2268,6 +2221,7 @@ A watch</textarea>
 
         // Effect switching functions
         function switchToEffect(effect) {
+            console.log('switchToEffect called with:', effect); // Debug log
             currentEffect = effect;
             
             // Hide all settings panels first
@@ -2280,6 +2234,9 @@ A watch</textarea>
             const redoButton = document.querySelector('.circle-button:last-child');
             undoButton.classList.add('disabled');
             redoButton.classList.add('disabled');
+
+            // Set static creation time
+            document.querySelector('.creation-time').textContent = '22 March 2025 at 11:35';
 
             // Reset canvas and text overlay visibility
             drawingCanvas.style.display = 'none';
@@ -2295,6 +2252,7 @@ A watch</textarea>
             // Effect-specific changes
             switch(effect) {
                 case 'writing':
+                    console.log('Setting up writing effect'); // Debug log
                     document.getElementById('other-settings').style.display = 'block';
                     notesTitle.textContent = 'Word Filter';
                     textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
@@ -2305,6 +2263,17 @@ A watch</textarea>
                         const numpadDisplay = document.getElementById('numpad-display');
                         if (numpadDisplay) numpadDisplay.textContent = '';
                         numpadContainer.style.display = 'block';
+                        
+                        // Load word list
+                        fetch('data/Long_Nouns.txt')
+                            .then(response => response.text())
+                            .then(text => {
+                                window.wordList = text.split('\n')
+                                    .map(word => word.trim())
+                                    .filter(word => word.length > 0);
+                                console.log('Word list loaded:', window.wordList.length, 'words'); // Debug log
+                            })
+                            .catch(error => console.error('Error loading word list:', error));
                     }
                     break;
                     
@@ -2312,7 +2281,7 @@ A watch</textarea>
                     document.getElementById('order-settings').style.display = 'block';
                     notesTitle.textContent = 'Items';
                     textOverlay.innerHTML = `<h1 class="notes-title">Items</h1>
-                        <br><br>
+                        <br>
                         Infront of you are 4 items:
                         <br><br>
                         A phone<br>
@@ -2361,34 +2330,6 @@ A watch</textarea>
             }
         }
 
-        // Initialize effect buttons when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize theme
-            initializeTheme();
-            
-            // Initialize effect buttons
-            const effectButtons = {
-                'checklist-btn': 'order',
-                'new-btn': 'new',
-                'paperclip-btn': 'paperclip',
-                'pen-btn': 'pen',
-                'writing-btn': 'writing'
-            };
-
-            // Add click handlers to effect buttons
-            Object.entries(effectButtons).forEach(([buttonId, effect]) => {
-                const button = document.getElementById(buttonId);
-                if (button) {
-                    button.addEventListener('click', () => {
-                        switchToEffect(effect);
-                    });
-                }
-            });
-
-            // Initialize with Order effect
-            switchToEffect('order');
-        });
-
         // Function to load a drawing onto the canvas
         function loadDrawing(imagePath) {
             // Switch to pen effect if not already there
@@ -2396,25 +2337,9 @@ A watch</textarea>
                 switchToEffect('pen');
             }
             
-            // Handle both iOS and Android modes
-            const isAndroid = document.body.classList.contains('android-mode');
-            
             // Ensure canvas is visible and properly sized
             drawingCanvas.style.display = 'block';
-            if (isAndroid) {
-                drawingCanvas.style.position = 'absolute';
-                drawingCanvas.style.top = '56px';
-                drawingCanvas.style.left = '0';
-                drawingCanvas.style.right = '0';
-                drawingCanvas.style.bottom = '48px';
-                drawingCanvas.style.background = '#202124';
-                drawingCanvas.style.zIndex = '1';
-                document.querySelector('#android-ui .note-title').style.display = 'none';
-                document.querySelector('#android-ui .note-body').style.display = 'none';
-            } else {
-                textOverlay.style.display = 'none';
-            }
-            
+            textOverlay.style.display = 'none';
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             
@@ -2473,8 +2398,6 @@ A watch</textarea>
             if (currentEffect !== 'pen') return;
 
             const transcript = event.target.value.toLowerCase();
-            const isAndroid = document.body.classList.contains('android-mode');
-            const drawings = getDrawings(isAndroid);
             const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
             
             if (matchingDrawing) {
@@ -2804,37 +2727,6 @@ A watch</textarea>
                     androidUI.querySelector('.note-title').style.display = 'none';
                     androidUI.querySelector('.note-body').style.display = 'none';
                     drawingCanvas.style.display = 'block';
-                    drawingCanvas.style.position = 'absolute';
-                    drawingCanvas.style.top = '56px'; // Height of the header
-                    drawingCanvas.style.left = '0';
-                    drawingCanvas.style.right = '0';
-                    drawingCanvas.style.bottom = '48px'; // Height of the footer
-                    drawingCanvas.style.background = '#202124';
-                    drawingCanvas.style.zIndex = '1';
-                    initializeDrawing();
-
-                    // Add back arrow click handler for drawing mode
-                    const backArrow = androidUI.querySelector('.back-arrow');
-                    backArrow.addEventListener('click', () => {
-                        if (currentEffect === 'pen') {
-                            // Show and focus the hidden input for dictation
-                            const dictationInput = document.getElementById('dictation-input');
-                            dictationInput.value = ''; // Clear previous input
-                            dictationInput.style.position = 'fixed';
-                            dictationInput.style.top = '50%';
-                            dictationInput.style.left = '50%';
-                            dictationInput.style.transform = 'translate(-50%, -50%)';
-                            dictationInput.style.width = '80%';
-                            dictationInput.style.height = '40px';
-                            dictationInput.style.fontSize = '16px';
-                            dictationInput.style.padding = '8px';
-                            dictationInput.style.border = 'none';
-                            dictationInput.style.background = '#202124';
-                            dictationInput.style.color = '#202124';
-                            dictationInput.style.caretColor = 'transparent';
-                            dictationInput.focus();
-                        }
-                    });
                     break;
                     
                 case 'writing':
@@ -2998,118 +2890,6 @@ Pick up one and give it to me.${spacer}`;
             document.querySelector('#app').style.display = isIOS ? 'flex' : 'none';
             document.querySelector('#android-ui').style.display = isIOS ? 'none' : 'flex';
         });
-
-        // Platform-specific drawing sets with customizable keywords
-        function getDrawings(isAndroid) {
-            const baseKeywords = {
-                'circle': 'circle',
-                'square': 'square',
-                'star': 'star',
-                'triangle': 'triangle'
-            };
-
-            // Load custom keywords from localStorage
-            const savedKeywords = JSON.parse(localStorage.getItem('drawing-keywords') || '{}');
-            const keywords = { ...baseKeywords, ...savedKeywords };
-
-            const basePath = isAndroid ? 'drawings/android/' : 'drawings/';
-            return [
-                { keyword: keywords.circle, imagePath: basePath + 'circle.png' },
-                { keyword: keywords.square, imagePath: basePath + 'square.png' },
-                { keyword: keywords.star, imagePath: basePath + 'star.png' },
-                { keyword: keywords.triangle, imagePath: basePath + 'triangle.png' }
-            ];
-        }
-
-        // Update the dictation input event listener to use the getDrawings function
-        document.getElementById('dictation-input').addEventListener('input', (event) => {
-            if (currentEffect !== 'pen') return;
-
-            const transcript = event.target.value.toLowerCase();
-            const isAndroid = document.body.classList.contains('android-mode');
-            const drawings = getDrawings(isAndroid);
-            const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
-            
-            if (matchingDrawing) {
-                // Hide the input and clear its value
-                event.target.style.position = 'absolute';
-                event.target.style.top = '-9999px';
-                event.target.style.left = '-9999px';
-                event.target.value = '';
-                event.target.blur();
-
-                // Load the matching drawing
-                loadDrawing(matchingDrawing.imagePath);
-            }
-        });
-
-        // Add settings panel for drawing keywords
-        const drawingSettings = document.createElement('div');
-        drawingSettings.className = 'effect-settings';
-        drawingSettings.id = 'drawing-settings';
-        drawingSettings.innerHTML = `
-            <div class="settings-group">
-                <div class="settings-label">Circle Keyword</div>
-                <input type="text" class="settings-input" id="circle-keyword">
-            </div>
-            <div class="settings-group">
-                <div class="settings-label">Square Keyword</div>
-                <input type="text" class="settings-input" id="square-keyword">
-            </div>
-            <div class="settings-group">
-                <div class="settings-label">Star Keyword</div>
-                <input type="text" class="settings-input" id="star-keyword">
-            </div>
-            <div class="settings-group">
-                <div class="settings-label">Triangle Keyword</div>
-                <input type="text" class="settings-input" id="triangle-keyword">
-            </div>
-            <button class="save-settings" id="save-drawing-keywords">Save Changes</button>
-        `;
-        document.body.appendChild(drawingSettings);
-
-        // Load saved keywords into settings panel
-        function loadDrawingKeywords() {
-            const savedKeywords = JSON.parse(localStorage.getItem('drawing-keywords') || '{}');
-            document.getElementById('circle-keyword').value = savedKeywords.circle || 'circle';
-            document.getElementById('square-keyword').value = savedKeywords.square || 'square';
-            document.getElementById('star-keyword').value = savedKeywords.star || 'star';
-            document.getElementById('triangle-keyword').value = savedKeywords.triangle || 'triangle';
-        }
-
-        // Save drawing keywords
-        document.getElementById('save-drawing-keywords').addEventListener('click', () => {
-            const keywords = {
-                circle: document.getElementById('circle-keyword').value.toLowerCase(),
-                square: document.getElementById('square-keyword').value.toLowerCase(),
-                star: document.getElementById('star-keyword').value.toLowerCase(),
-                triangle: document.getElementById('triangle-keyword').value.toLowerCase()
-            };
-            
-            localStorage.setItem('drawing-keywords', JSON.stringify(keywords));
-            
-            // Show feedback
-            const saveButton = document.getElementById('save-drawing-keywords');
-            saveButton.textContent = 'Saved!';
-            setTimeout(() => {
-                saveButton.textContent = 'Save Changes';
-            }, 2000);
-        });
-
-        // Update effect switching to handle drawing settings
-        function switchToEffect(effect) {
-            currentEffect = effect;
-            hideAllEffectSettings();
-            
-            if (effect === 'pen') {
-                document.getElementById('drawing-settings').style.display = 'block';
-                loadDrawingKeywords();
-            }
-            // ... rest of the function ...
-        }
-
-        // Initialize keywords on page load
-        loadDrawingKeywords();
     </script>
 </body>
 </html>
