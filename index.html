@@ -1539,15 +1539,15 @@ A watch</textarea>
             const drawingList = document.getElementById('drawing-list');
             if (!drawingList) return;
 
-            // Create a container for the two-column layout
+            // Create a container for the two-column layout with minimal spacing
             drawingList.innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 4px;">
                     ${drawings
                         .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
                         .map(drawing => `
-                            <div class="drawing-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
-                                <span style="flex: 1; font-size: 14px;">${drawing.title.toUpperCase()} - ${drawing.keyword.toUpperCase()}</span>
-                                <button class="edit-drawing-btn" style="background: none; border: none; color: #007AFF; padding: 2px 4px; font-size: 12px; cursor: pointer;" data-id="${drawing.id}">EDIT</button>
+                            <div class="drawing-item" style="display: flex; align-items: center; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #e8eaed;">
+                                <span style="flex: 1; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${drawing.title.toUpperCase()} - ${drawing.keyword.toUpperCase()}</span>
+                                <button class="edit-drawing-btn" style="background: none; border: none; color: #007AFF; padding: 2px; margin-left: 4px; font-size: 10px; cursor: pointer;" data-id="${drawing.id}">EDIT</button>
                             </div>
                         `).join('')}
                 </div>`;
