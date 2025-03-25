@@ -2361,7 +2361,7 @@ A watch</textarea>
             }
         }
 
-        // Remove duplicate event listener initialization
+        // Initialize effect buttons when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize theme
             initializeTheme();
@@ -2375,13 +2375,11 @@ A watch</textarea>
                 'writing-btn': 'writing'
             };
 
-            // Remove any existing listeners first
+            // Add click handlers to effect buttons
             Object.entries(effectButtons).forEach(([buttonId, effect]) => {
                 const button = document.getElementById(buttonId);
                 if (button) {
-                    const newButton = button.cloneNode(true);
-                    button.parentNode.replaceChild(newButton, button);
-                    newButton.addEventListener('click', () => {
+                    button.addEventListener('click', () => {
                         switchToEffect(effect);
                     });
                 }
