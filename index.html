@@ -2592,7 +2592,7 @@ A watch</textarea>
                             }
                         });
 
-                        // Add click handlers to the new word buttons
+                        // Function to add click handlers to word buttons
                         addWordClickHandlers();
                     });
                 });
@@ -2602,9 +2602,20 @@ A watch</textarea>
                     document.querySelectorAll('.word-list .word').forEach(wordButton => {
                         wordButton.addEventListener('click', () => {
                             const selectedWord = wordButton.textContent;
+                            // Update iOS title if it exists
                             const notesTitle = document.querySelector('.notes-title');
                             if (notesTitle) {
                                 notesTitle.textContent = selectedWord;
+                            }
+                            // Update Android title if it exists
+                            const androidTitle = document.querySelector('#android-ui .note-title');
+                            if (androidTitle) {
+                                androidTitle.value = selectedWord;
+                            }
+                            // Hide the filtered words container
+                            const filteredWordsContainer = document.getElementById('filtered-words');
+                            if (filteredWordsContainer) {
+                                filteredWordsContainer.style.display = 'none';
                             }
                         });
                     });
