@@ -2361,9 +2361,12 @@ A watch</textarea>
             }
         }
 
-        // Initialize effect buttons when DOM is loaded
+        // Remove duplicate event listener initialization
         document.addEventListener('DOMContentLoaded', function() {
-            // iOS Effect Button Listeners
+            // Initialize theme
+            initializeTheme();
+            
+            // Initialize effect buttons
             const effectButtons = {
                 'checklist-btn': 'order',
                 'new-btn': 'new',
@@ -2372,10 +2375,13 @@ A watch</textarea>
                 'writing-btn': 'writing'
             };
 
+            // Remove any existing listeners first
             Object.entries(effectButtons).forEach(([buttonId, effect]) => {
                 const button = document.getElementById(buttonId);
                 if (button) {
-                    button.addEventListener('click', () => {
+                    const newButton = button.cloneNode(true);
+                    button.parentNode.replaceChild(newButton, button);
+                    newButton.addEventListener('click', () => {
                         switchToEffect(effect);
                     });
                 }
