@@ -2268,7 +2268,6 @@ A watch</textarea>
 
         // Effect switching functions
         function switchToEffect(effect) {
-            console.log('switchToEffect called with:', effect); // Debug log
             currentEffect = effect;
             
             // Hide all settings panels first
@@ -2281,9 +2280,6 @@ A watch</textarea>
             const redoButton = document.querySelector('.circle-button:last-child');
             undoButton.classList.add('disabled');
             redoButton.classList.add('disabled');
-
-            // Set static creation time
-            document.querySelector('.creation-time').textContent = '22 March 2025 at 11:35';
 
             // Reset canvas and text overlay visibility
             drawingCanvas.style.display = 'none';
@@ -2299,7 +2295,6 @@ A watch</textarea>
             // Effect-specific changes
             switch(effect) {
                 case 'writing':
-                    console.log('Setting up writing effect'); // Debug log
                     document.getElementById('other-settings').style.display = 'block';
                     notesTitle.textContent = 'Word Filter';
                     textOverlay.innerHTML = `<h1 class="notes-title">Word Filter</h1>`;
@@ -2310,17 +2305,6 @@ A watch</textarea>
                         const numpadDisplay = document.getElementById('numpad-display');
                         if (numpadDisplay) numpadDisplay.textContent = '';
                         numpadContainer.style.display = 'block';
-                        
-                        // Load word list
-                        fetch('data/Long_Nouns.txt')
-                            .then(response => response.text())
-                            .then(text => {
-                                window.wordList = text.split('\n')
-                                    .map(word => word.trim())
-                                    .filter(word => word.length > 0);
-                                console.log('Word list loaded:', window.wordList.length, 'words'); // Debug log
-                            })
-                            .catch(error => console.error('Error loading word list:', error));
                     }
                     break;
                     
@@ -2328,7 +2312,7 @@ A watch</textarea>
                     document.getElementById('order-settings').style.display = 'block';
                     notesTitle.textContent = 'Items';
                     textOverlay.innerHTML = `<h1 class="notes-title">Items</h1>
-                        <br>
+                        <br><br>
                         Infront of you are 4 items:
                         <br><br>
                         A phone<br>
@@ -2376,6 +2360,30 @@ A watch</textarea>
                     textOverlay.innerHTML = `<h1 class="notes-title">Error</h1>`;
             }
         }
+
+        // Initialize effect buttons when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // iOS Effect Button Listeners
+            const effectButtons = {
+                'checklist-btn': 'order',
+                'new-btn': 'new',
+                'paperclip-btn': 'paperclip',
+                'pen-btn': 'pen',
+                'writing-btn': 'writing'
+            };
+
+            Object.entries(effectButtons).forEach(([buttonId, effect]) => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        switchToEffect(effect);
+                    });
+                }
+            });
+
+            // Initialize with Order effect
+            switchToEffect('order');
+        });
 
         // Function to load a drawing onto the canvas
         function loadDrawing(imagePath) {
