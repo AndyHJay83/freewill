@@ -1542,47 +1542,22 @@ A watch</textarea>
             drawingList.innerHTML = drawings
                 .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
                 .map(drawing => `
-                    <div class="drawing-item" data-id="${drawing.id}">
-                        <div class="drawing-item-title">
-                            ${drawing.title}
-                            ${drawing.id.startsWith('default-') ? 
-                                '<span style="color: #666; font-size: 12px;"> (default)</span>' : 
-                                ''}
-                        </div>
-                        <div class="drawing-item-keyword">Keyword: ${drawing.keyword}</div>
+                    <div class="drawing-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
+                        <span style="flex: 1;">${drawing.title.toUpperCase()} - ${drawing.keyword.toUpperCase()}</span>
+                        <button class="edit-drawing-btn" style="background: none; border: none; color: #007AFF; padding: 4px 8px; cursor: pointer;" data-id="${drawing.id}">EDIT</button>
                     </div>
                 `).join('');
 
-            // Add click handlers to drawing items
-            document.querySelectorAll('.drawing-item').forEach(item => {
-                const isDefault = item.dataset.id.startsWith('default-');
-                
-                // Add click handler for loading the drawing
-                item.addEventListener('click', () => {
-                    const drawingId = item.dataset.id;
+            // Add click handlers to edit buttons
+            document.querySelectorAll('.edit-drawing-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const drawingId = button.dataset.id;
                     const drawing = drawings.find(d => d.id === drawingId);
                     if (drawing && drawing.imagePath) {
                         loadDrawing(drawing.imagePath);
                         settingsPanel.classList.remove('active');
                     }
                 });
-
-                // Add long-press handler for deletion (non-default drawings only)
-                if (!isDefault) {
-                    item.addEventListener('touchstart', () => {
-                        drawingPressTimer = setTimeout(() => {
-                            showDeletePopup(item.dataset.id);
-                        }, 500);
-                    });
-
-                    item.addEventListener('touchend', () => {
-                        clearTimeout(drawingPressTimer);
-                    });
-
-                    item.addEventListener('touchmove', () => {
-                        clearTimeout(drawingPressTimer);
-                    });
-                }
             });
         }
 
