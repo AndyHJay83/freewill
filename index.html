@@ -1539,14 +1539,18 @@ A watch</textarea>
             const drawingList = document.getElementById('drawing-list');
             if (!drawingList) return;
 
-            drawingList.innerHTML = drawings
-                .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
-                .map(drawing => `
-                    <div class="drawing-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
-                        <span style="flex: 1;">${drawing.title.toUpperCase()} - ${drawing.keyword.toUpperCase()}</span>
-                        <button class="edit-drawing-btn" style="background: none; border: none; color: #007AFF; padding: 4px 8px; cursor: pointer;" data-id="${drawing.id}">EDIT</button>
-                    </div>
-                `).join('');
+            // Create a container for the two-column layout
+            drawingList.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    ${drawings
+                        .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+                        .map(drawing => `
+                            <div class="drawing-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #e8eaed;">
+                                <span style="flex: 1; font-size: 14px;">${drawing.title.toUpperCase()} - ${drawing.keyword.toUpperCase()}</span>
+                                <button class="edit-drawing-btn" style="background: none; border: none; color: #007AFF; padding: 2px 4px; font-size: 12px; cursor: pointer;" data-id="${drawing.id}">EDIT</button>
+                            </div>
+                        `).join('')}
+                </div>`;
 
             // Add click handlers to edit buttons
             document.querySelectorAll('.edit-drawing-btn').forEach(button => {
