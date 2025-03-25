@@ -2744,6 +2744,7 @@ A watch</textarea>
                     // Show numpad and set correct title/content
                     androidUI.querySelector('.note-title').value = 'Word Filter';
                     androidUI.querySelector('.note-body').value = '';
+                    androidUI.querySelector('.note-body').placeholder = ''; // Remove placeholder text
                     if (numpadContainer) {
                         currentCode = '';
                         const numpadDisplay = document.getElementById('numpad-display');
