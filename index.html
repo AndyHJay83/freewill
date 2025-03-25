@@ -256,8 +256,8 @@
             background-color: #000;
             transition: right 0.3s ease;
             z-index: 1000;
-            padding: 20px;
-            color: white;
+            display: flex;
+            flex-direction: column;
         }
 
         .settings-panel.active {
@@ -268,7 +268,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px;
         }
 
         .settings-title {
@@ -837,6 +846,11 @@
             position: relative;
             flex: 1;
             overflow: hidden;
+        }
+
+        body.android-mode .settings-header {
+            background-color: #202124;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
