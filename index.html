@@ -2414,6 +2414,8 @@ A watch</textarea>
             if (currentEffect !== 'pen') return;
 
             const transcript = event.target.value.toLowerCase();
+            const isAndroid = document.body.classList.contains('android-mode');
+            const drawings = getDrawings(isAndroid);
             const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
             
             if (matchingDrawing) {
@@ -2937,6 +2939,118 @@ Pick up one and give it to me.${spacer}`;
             document.querySelector('#app').style.display = isIOS ? 'flex' : 'none';
             document.querySelector('#android-ui').style.display = isIOS ? 'none' : 'flex';
         });
+
+        // Platform-specific drawing sets with customizable keywords
+        function getDrawings(isAndroid) {
+            const baseKeywords = {
+                'circle': 'circle',
+                'square': 'square',
+                'star': 'star',
+                'triangle': 'triangle'
+            };
+
+            // Load custom keywords from localStorage
+            const savedKeywords = JSON.parse(localStorage.getItem('drawing-keywords') || '{}');
+            const keywords = { ...baseKeywords, ...savedKeywords };
+
+            const basePath = isAndroid ? 'drawings/android/' : 'drawings/';
+            return [
+                { keyword: keywords.circle, imagePath: basePath + 'circle.png' },
+                { keyword: keywords.square, imagePath: basePath + 'square.png' },
+                { keyword: keywords.star, imagePath: basePath + 'star.png' },
+                { keyword: keywords.triangle, imagePath: basePath + 'triangle.png' }
+            ];
+        }
+
+        // Update the dictation input event listener to use the getDrawings function
+        document.getElementById('dictation-input').addEventListener('input', (event) => {
+            if (currentEffect !== 'pen') return;
+
+            const transcript = event.target.value.toLowerCase();
+            const isAndroid = document.body.classList.contains('android-mode');
+            const drawings = getDrawings(isAndroid);
+            const matchingDrawing = drawings.find(d => transcript.includes(d.keyword.toLowerCase()));
+            
+            if (matchingDrawing) {
+                // Hide the input and clear its value
+                event.target.style.position = 'absolute';
+                event.target.style.top = '-9999px';
+                event.target.style.left = '-9999px';
+                event.target.value = '';
+                event.target.blur();
+
+                // Load the matching drawing
+                loadDrawing(matchingDrawing.imagePath);
+            }
+        });
+
+        // Add settings panel for drawing keywords
+        const drawingSettings = document.createElement('div');
+        drawingSettings.className = 'effect-settings';
+        drawingSettings.id = 'drawing-settings';
+        drawingSettings.innerHTML = `
+            <div class="settings-group">
+                <div class="settings-label">Circle Keyword</div>
+                <input type="text" class="settings-input" id="circle-keyword">
+            </div>
+            <div class="settings-group">
+                <div class="settings-label">Square Keyword</div>
+                <input type="text" class="settings-input" id="square-keyword">
+            </div>
+            <div class="settings-group">
+                <div class="settings-label">Star Keyword</div>
+                <input type="text" class="settings-input" id="star-keyword">
+            </div>
+            <div class="settings-group">
+                <div class="settings-label">Triangle Keyword</div>
+                <input type="text" class="settings-input" id="triangle-keyword">
+            </div>
+            <button class="save-settings" id="save-drawing-keywords">Save Changes</button>
+        `;
+        document.body.appendChild(drawingSettings);
+
+        // Load saved keywords into settings panel
+        function loadDrawingKeywords() {
+            const savedKeywords = JSON.parse(localStorage.getItem('drawing-keywords') || '{}');
+            document.getElementById('circle-keyword').value = savedKeywords.circle || 'circle';
+            document.getElementById('square-keyword').value = savedKeywords.square || 'square';
+            document.getElementById('star-keyword').value = savedKeywords.star || 'star';
+            document.getElementById('triangle-keyword').value = savedKeywords.triangle || 'triangle';
+        }
+
+        // Save drawing keywords
+        document.getElementById('save-drawing-keywords').addEventListener('click', () => {
+            const keywords = {
+                circle: document.getElementById('circle-keyword').value.toLowerCase(),
+                square: document.getElementById('square-keyword').value.toLowerCase(),
+                star: document.getElementById('star-keyword').value.toLowerCase(),
+                triangle: document.getElementById('triangle-keyword').value.toLowerCase()
+            };
+            
+            localStorage.setItem('drawing-keywords', JSON.stringify(keywords));
+            
+            // Show feedback
+            const saveButton = document.getElementById('save-drawing-keywords');
+            saveButton.textContent = 'Saved!';
+            setTimeout(() => {
+                saveButton.textContent = 'Save Changes';
+            }, 2000);
+        });
+
+        // Update effect switching to handle drawing settings
+        function switchToEffect(effect) {
+            currentEffect = effect;
+            hideAllEffectSettings();
+            
+            if (effect === 'pen') {
+                document.getElementById('drawing-settings').style.display = 'block';
+                loadDrawingKeywords();
+            }
+            // ... rest of the function ...
+        }
+
+        // Initialize keywords on page load
+        loadDrawingKeywords();
     </script>
 </body>
 </html>
